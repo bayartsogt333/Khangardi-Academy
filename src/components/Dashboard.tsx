@@ -1,93 +1,59 @@
-import { useMemo, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { AdminCourseBuilder } from './AdminCourseBuilder'
-import { collectionGroup, query, where, onSnapshot } from 'firebase/firestore'
+import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../api/firebase'
+import { loadAdminCourses } from '../api/courses'
+import { AdminHeader } from './AdminHeader'
 
 export function Dashboard() {
     const { logout, profile } = useAuth()
-
-    const initials = useMemo(() => {
-        const displayName = profile?.displayName || 'KA'
-        return displayName
-            .split(' ')
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((part) => part[0]?.toUpperCase() ?? '')
-            .join('')
-    }, [profile?.displayName])
 
     const [pendingCount, setPendingCount] = useState(0)
 
     useEffect(() => {
         if (profile?.role !== 'admin') return
 
-        const q = query(collectionGroup(db, 'enrollments'), where('status', '==', 'pending'))
-        const unsub = onSnapshot(q, (snapshot) => {
-            setPendingCount(snapshot.size)
+        let cancelled = false
+        const unsubs: Array<() => void> = []
+        const countsByCourse = new Map<string, number>()
+
+        void loadAdminCourses().then((courses) => {
+            if (cancelled) return
+
+            if (!courses.length) {
+                setPendingCount(0)
+                return
+            }
+
+            const updateTotal = () => {
+                if (cancelled) return
+
+                const total = Array.from(countsByCourse.values()).reduce((sum, value) => sum + value, 0)
+                setPendingCount(total)
+            }
+
+            courses.forEach((course) => {
+                const courseQuery = query(collection(db, 'courses', course.id, 'enrollments'), where('status', '==', 'pending'))
+                const unsub = onSnapshot(courseQuery, (snapshot) => {
+                    countsByCourse.set(course.id, snapshot.size)
+                    updateTotal()
+                })
+
+                unsubs.push(unsub)
+            })
         })
 
-        return () => unsub()
+        return () => {
+            cancelled = true
+            unsubs.forEach((unsub) => unsub())
+        }
     }, [profile?.role])
 
     return (
         <section className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 sm:px-6 lg:px-8">
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-                <header className="rounded-3xl border border-slate-800/80 bg-slate-900/80 p-5 shadow-2xl shadow-black/30 backdrop-blur xl:p-6">
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="space-y-2">
-                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Signed in</span>
-                            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                                Welcome, {profile?.displayName}
-                            </h1>
-                            <p className="max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                                {profile?.role === 'admin'
-                                    ? 'Administrator access enabled. Manage courses, sections, and lessons below.'
-                                    : 'Your learner workspace is ready.'}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:flex-row sm:items-center">
-                            <div className="flex items-center gap-3 rounded-2xl bg-slate-900 px-4 py-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-400 text-sm font-black text-slate-950">
-                                    {initials}
-                                </div>
-                                <div>
-                                    <strong className="block text-sm font-medium text-white">{profile?.displayName}</strong>
-                                    <span className="block text-sm text-slate-400">{profile?.email}</span>
-                                </div>
-                            </div>
-
-                            <Link
-                                to={profile?.role === 'admin' ? '/learn' : '/learn'}
-                                className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
-                            >
-                                Learning space
-                            </Link>
-
-                            {profile?.role === 'admin' ? (
-                                <Link
-                                    to="/admin/enrollments"
-                                    className="relative rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
-                                >
-                                    Enrollment admin
-                                    {pendingCount > 0 ? (
-                                        <span className="absolute -top-2 -right-2 inline-flex items-center justify-center rounded-full bg-rose-500 px-2 py-1 text-xs font-semibold text-white">{pendingCount}</span>
-                                    ) : null}
-                                </Link>
-                            ) : null}
-
-                            <button
-                                type="button"
-                                onClick={logout}
-                                className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
-                            >
-                                Logout
-                            </button>
-                        </div>
-                    </div>
-                </header>
+                <AdminHeader profile={profile} onLogout={logout} activePage="studio" pendingCount={pendingCount} />
 
                 <div className="grid gap-4 md:grid-cols-3">
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">

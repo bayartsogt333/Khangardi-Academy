@@ -5,20 +5,22 @@ import { loadAdminCourses } from '../api/courses'
 import type { CourseRecord, EnrollmentRecord } from '../types/course'
 import type { UserProfile } from '../types/auth'
 import { Link } from 'react-router-dom'
-import { collectionGroup, onSnapshot } from 'firebase/firestore'
+import { collection, onSnapshot, query } from 'firebase/firestore'
 import { db } from '../api/firebase'
+import { AdminHeader } from '../components/AdminHeader'
+import { useAuth } from '../context/AuthContext'
 
 export function AdminEnrollmentsPage() {
+    const { profile, logout } = useAuth()
     const [courses, setCourses] = useState<CourseRecord[]>([])
     const [users, setUsers] = useState<UserProfile[]>([])
     const [enrollments, setEnrollments] = useState<EnrollmentRecord[]>([])
-    const [courseId, setCourseId] = useState('')
     const [loading, setLoading] = useState(true)
     const [busyId, setBusyId] = useState('')
     const [error, setError] = useState('')
     const [view, setView] = useState<'pending' | 'all'>('pending')
 
-    const refresh = async (preferredCourseId?: string) => {
+    const refresh = async () => {
         setLoading(true)
         setError('')
 
@@ -26,9 +28,6 @@ export function AdminEnrollmentsPage() {
             const [nextCourses, nextUsers] = await Promise.all([loadAdminCourses(), loadAllUsers()])
             setCourses(nextCourses)
             setUsers(nextUsers)
-
-            const nextCourseId = preferredCourseId || courseId || nextCourses[0]?.id || ''
-            setCourseId(nextCourseId)
 
             // Load enrollments for all courses and flatten them so pending requests show in one list
             const enrollmentsByCourse = await Promise.all(nextCourses.map((c) => loadCourseEnrollments(c.id)))
@@ -45,15 +44,39 @@ export function AdminEnrollmentsPage() {
     useEffect(() => {
         void refresh()
 
-        // subscribe to live enrollment updates across all courses
-        const unsub = onSnapshot(collectionGroup(db, 'enrollments'), (snapshot) => {
-            const live = snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as EnrollmentRecord[]
-            setEnrollments(live)
-        }, (err) => {
-            setError(err.message || 'Failed to subscribe to enrollments.')
+        let cancelled = false
+        const unsubs: Array<() => void> = []
+        const latestByCourse = new Map<string, EnrollmentRecord[]>()
+
+        void loadAdminCourses().then((loadedCourses) => {
+            if (cancelled) return
+
+            loadedCourses.forEach((course) => {
+                const courseQuery = query(collection(db, 'courses', course.id, 'enrollments'))
+                const unsub = onSnapshot(courseQuery, (snapshot) => {
+                    if (cancelled) return
+
+                    const courseEnrollments = snapshot.docs.map((docItem) => ({
+                        
+                        ...(docItem.data() as EnrollmentRecord), id: docItem.id,
+                    })) as EnrollmentRecord[]
+
+                    latestByCourse.set(course.id, courseEnrollments)
+                    setEnrollments(Array.from(latestByCourse.values()).flat())
+                }, (err) => {
+                    if (!cancelled) {
+                        setError(err.message || 'Failed to subscribe to enrollments.')
+                    }
+                })
+
+                unsubs.push(unsub)
+            })
         })
 
-        return () => unsub()
+        return () => {
+            cancelled = true
+            unsubs.forEach((unsub) => unsub())
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -76,7 +99,7 @@ export function AdminEnrollmentsPage() {
 
         try {
             await approveEnrollment(courseIdParam, userId)
-            await refresh(courseIdParam)
+            await refresh()
         } catch (actionError) {
             const firebaseError = actionError as { message?: string }
             setError(firebaseError.message || 'Failed to approve enrollment.')
@@ -93,7 +116,7 @@ export function AdminEnrollmentsPage() {
 
         try {
             await rejectEnrollment(courseIdParam, userId)
-            await refresh(courseIdParam)
+            await refresh()
         } catch (actionError) {
             const firebaseError = actionError as { message?: string }
             setError(firebaseError.message || 'Failed to reject enrollment.')
@@ -110,7 +133,7 @@ export function AdminEnrollmentsPage() {
 
         try {
             await removeEnrollment(courseIdParam, userId)
-            await refresh(courseIdParam)
+            await refresh()
         } catch (actionError) {
             const firebaseError = actionError as { message?: string }
             setError(firebaseError.message || 'Failed to revoke enrollment.')
@@ -137,30 +160,25 @@ export function AdminEnrollmentsPage() {
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="mx-auto w-full max-w-7xl px-4 py-6">
-                <header className="mb-6 rounded-3xl border border-slate-800/80 bg-slate-900/80 p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Enrollment admin</div>
-                            <h1 className="mt-2 text-2xl font-semibold text-white">Manage access and requests</h1>
-                            <p className="mt-1 text-sm text-slate-400">Default view shows pending requests; switch to all users to grant access directly.</p>
-                        </div>
-                        <div>
-                            <Link to="/admin" className="text-sm text-slate-300">← Admin studio</Link>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300">
-                                <button
-                                    onClick={() => setView('pending')}
-                                    className={`${view === 'pending' ? 'font-semibold text-white' : 'text-slate-300'}`}
-                                >Pending</button>
-                                <button
-                                    onClick={() => setView('all')}
-                                    className={`ml-3 ${view === 'all' ? 'font-semibold text-white' : 'text-slate-300'}`}
-                                >All users</button>
-                            </div>
-                        </div>
+                <AdminHeader profile={profile} onLogout={logout} activePage="enrollments" pendingCount={enrollments.filter((item) => item.status === 'pending').length} />
+
+                <div className="mt-4 flex items-center justify-between rounded-3xl border border-slate-800/80 bg-slate-900/80 p-4">
+                    <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Enrollment admin</div>
+                        <h2 className="mt-1 text-xl font-semibold text-white">Manage access and requests</h2>
+                        <p className="mt-1 text-sm text-slate-400">Default view shows pending requests; switch to all users to grant access directly.</p>
                     </div>
-                </header>
+                    <div className="rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300">
+                        <button
+                            onClick={() => setView('pending')}
+                            className={`${view === 'pending' ? 'font-semibold text-white' : 'text-slate-300'}`}
+                        >Pending</button>
+                        <button
+                            onClick={() => setView('all')}
+                            className={`ml-3 ${view === 'all' ? 'font-semibold text-white' : 'text-slate-300'}`}
+                        >All users</button>
+                    </div>
+                </div>
 
                 {error ? <p className="mb-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</p> : null}
 
