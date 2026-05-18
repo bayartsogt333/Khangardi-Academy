@@ -1,5 +1,8 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { AdminEnrollmentPanel } from './AdminEnrollmentPanel'
+import { AdminCourseBuilder } from './AdminCourseBuilder'
 
 export function Dashboard() {
     const { logout, profile } = useAuth()
@@ -15,55 +18,91 @@ export function Dashboard() {
     }, [profile?.displayName])
 
     return (
-        <section className="dashboard-shell">
-            <header className="dashboard-topbar">
-                <div>
-                    <span className="eyebrow">Signed in</span>
-                    <h1>Welcome, {profile?.displayName}</h1>
-                    <p>{profile?.role === 'admin' ? 'Administrator access enabled.' : 'User workspace ready.'}</p>
-                </div>
+        <section className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 sm:px-6 lg:px-8">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+                <header className="rounded-3xl border border-slate-800/80 bg-slate-900/80 p-5 shadow-2xl shadow-black/30 backdrop-blur xl:p-6">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="space-y-2">
+                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Signed in</span>
+                            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                                Welcome, {profile?.displayName}
+                            </h1>
+                            <p className="max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                                {profile?.role === 'admin'
+                                    ? 'Administrator access enabled. Manage courses, sections, and lessons below.'
+                                    : 'Your learner workspace is ready.'}
+                            </p>
+                        </div>
 
-                <div className="profile-chip">
-                    <div className="avatar">{initials}</div>
-                    <div>
-                        <strong>{profile?.displayName}</strong>
-                        <span>{profile?.email}</span>
+                        <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:flex-row sm:items-center">
+                            <div className="flex items-center gap-3 rounded-2xl bg-slate-900 px-4 py-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-400 text-sm font-black text-slate-950">
+                                    {initials}
+                                </div>
+                                <div>
+                                    <strong className="block text-sm font-medium text-white">{profile?.displayName}</strong>
+                                    <span className="block text-sm text-slate-400">{profile?.email}</span>
+                                </div>
+                            </div>
+
+                            <Link
+                                to={profile?.role === 'admin' ? '/learn' : '/learn'}
+                                className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
+                            >
+                                Learning space
+                            </Link>
+
+                            <button
+                                type="button"
+                                onClick={logout}
+                                className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
+                            >
+                                Logout
+                            </button>
+                        </div>
                     </div>
-                    <button type="button" onClick={logout}>
-                        Logout
-                    </button>
+                </header>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                    <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
+                        <span className="text-xs uppercase tracking-[0.24em] text-cyan-300">Role</span>
+                        <h2 className="mt-3 text-2xl font-semibold text-white">
+                            {profile?.role === 'admin' ? 'Admin studio' : 'Student space'}
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-400">
+                            {profile?.role === 'admin'
+                                ? 'Create, edit, delete, and reorder course content.'
+                                : 'Browse published courses and continue enrolled lessons.'}
+                        </p>
+                    </article>
+
+                    <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
+                        <span className="text-xs uppercase tracking-[0.24em] text-cyan-300">Access</span>
+                        <h2 className="mt-3 text-2xl font-semibold text-white">
+                            {profile?.role === 'admin' ? 'Full control' : 'Enrollment gated'}
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-400">
+                            Student course trees open after enrollment; admins can preview everything.
+                        </p>
+                    </article>
+
+                    <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
+                        <span className="text-xs uppercase tracking-[0.24em] text-cyan-300">Learning</span>
+                        <h2 className="mt-3 text-2xl font-semibold text-white">Separate course route</h2>
+                        <p className="mt-2 text-sm text-slate-400">
+                            Open the catalog and study page from the dedicated learner route.
+                        </p>
+                    </article>
                 </div>
-            </header>
 
-            <div className="dashboard-grid">
-                <article className="dashboard-card dashboard-card--highlight">
-                    <span className="card-kicker">Role</span>
-                    <h2>{profile?.role === 'admin' ? 'Admin control center' : 'Student workspace'}</h2>
-                    <p>
-                        This account is authenticated through Firebase and its role is resolved from Firestore.
-                    </p>
-                </article>
-
-                <article className="dashboard-card">
-                    <span className="card-kicker">Classroom</span>
-                    <h2>Courses, lessons, and enrollment</h2>
-                    <p>Next step: protect lesson documents by role and enrollment status.</p>
-                </article>
-
-                <article className="dashboard-card">
-                    <span className="card-kicker">Community</span>
-                    <h2>Posts, comments, and reactions</h2>
-                    <p>Next step: bind a Firestore feed to authenticated post creation.</p>
-                </article>
-
-                <article className="dashboard-card dashboard-card--wide">
-                    <span className="card-kicker">Storage</span>
-                    <h2>Avatar and media uploads are ready</h2>
-                    <p>
-                        The Firebase Storage client is wired, so you can add profile images, attachments, and
-                        post media without reworking the auth layer.
-                    </p>
-                </article>
+                {profile?.role === 'admin' ? (
+                    <div className="grid gap-6">
+                        <AdminEnrollmentPanel />
+                        <AdminCourseBuilder />
+                    </div>
+                ) : (
+                    <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 text-sm text-slate-400" />
+                )}
             </div>
         </section>
     )

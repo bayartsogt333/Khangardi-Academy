@@ -1,6 +1,9 @@
 import './App.css'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthPanel } from './components/AuthPanel'
 import { Dashboard } from './components/Dashboard'
+import { LearningHomePage } from './pages/LearningHomePage'
+import { CourseStudyPage } from './pages/CourseStudyPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 function AppContent() {
@@ -18,7 +21,24 @@ function AppContent() {
         )
     }
 
-    return <main>{profile ? <Dashboard /> : <AuthPanel />}</main>
+    if (!profile) {
+        return <main>{<AuthPanel />}</main>
+    }
+
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route
+                    path="/"
+                    element={<Navigate to={profile.role === 'admin' ? '/admin' : '/learn'} replace />}
+                />
+                <Route path="/admin" element={<Dashboard />} />
+                <Route path="/learn" element={<LearningHomePage />} />
+                <Route path="/learn/:courseId" element={<CourseStudyPage />} />
+                <Route path="*" element={<Navigate to={profile.role === 'admin' ? '/admin' : '/learn'} replace />} />
+            </Routes>
+        </BrowserRouter>
+    )
 }
 
 function App() {
