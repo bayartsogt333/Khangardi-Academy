@@ -4,6 +4,7 @@ import { AuthPanel } from './components/AuthPanel'
 import { Dashboard } from './components/Dashboard'
 import { LearningHomePage } from './pages/LearningHomePage'
 import { CourseStudyPage } from './pages/CourseStudyPage'
+import { AdminEnrollmentsPage } from './pages/AdminEnrollmentsPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 function AppContent() {
@@ -33,6 +34,7 @@ function AppContent() {
                     element={<Navigate to={profile.role === 'admin' ? '/admin' : '/learn'} replace />}
                 />
                 <Route path="/admin" element={<Dashboard />} />
+                <Route path="/admin/enrollments" element={<AdminEnrollmentsPage />} />
                 <Route path="/learn" element={<LearningHomePage />} />
                 <Route path="/learn/:courseId" element={<CourseStudyPage />} />
                 <Route path="*" element={<Navigate to={profile.role === 'admin' ? '/admin' : '/learn'} replace />} />

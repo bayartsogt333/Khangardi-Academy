@@ -169,7 +169,7 @@ export function AdminCourseBuilder() {
                     ? preferredLessonId
                     : selection.lessonId && selectedSection.lessons.some((lesson) => lesson.id === selection.lessonId)
                         ? selection.lessonId
-                        : selectedSection.lessons[0]?.id ?? null
+                        : null
 
             setSelection((current) => ({
                 ...current,
@@ -252,12 +252,8 @@ export function AdminCourseBuilder() {
     }
 
     const selectSection = (sectionId: string) => {
-        const section = tree.sections.find((item) => item.id === sectionId)
-        setSelection((current) => ({
-            ...current,
-            sectionId,
-            lessonId: section?.lessons[0]?.id ?? null,
-        }))
+        // When selecting a section, default to no lesson selected so admins can add new lessons immediately
+        setSelection((current) => ({ ...current, sectionId, lessonId: null }))
     }
 
     const selectLesson = (lessonId: string) => {

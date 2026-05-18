@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { AdminEnrollmentPanel } from './AdminEnrollmentPanel'
 import { AdminCourseBuilder } from './AdminCourseBuilder'
+import { collectionGroup, query, where, onSnapshot } from 'firebase/firestore'
+import { db } from '../api/firebase'
 
 export function Dashboard() {
     const { logout, profile } = useAuth()
@@ -16,6 +17,19 @@ export function Dashboard() {
             .map((part) => part[0]?.toUpperCase() ?? '')
             .join('')
     }, [profile?.displayName])
+
+    const [pendingCount, setPendingCount] = useState(0)
+
+    useEffect(() => {
+        if (profile?.role !== 'admin') return
+
+        const q = query(collectionGroup(db, 'enrollments'), where('status', '==', 'pending'))
+        const unsub = onSnapshot(q, (snapshot) => {
+            setPendingCount(snapshot.size)
+        })
+
+        return () => unsub()
+    }, [profile?.role])
 
     return (
         <section className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 sm:px-6 lg:px-8">
@@ -51,6 +65,18 @@ export function Dashboard() {
                             >
                                 Learning space
                             </Link>
+
+                            {profile?.role === 'admin' ? (
+                                <Link
+                                    to="/admin/enrollments"
+                                    className="relative rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
+                                >
+                                    Enrollment admin
+                                    {pendingCount > 0 ? (
+                                        <span className="absolute -top-2 -right-2 inline-flex items-center justify-center rounded-full bg-rose-500 px-2 py-1 text-xs font-semibold text-white">{pendingCount}</span>
+                                    ) : null}
+                                </Link>
+                            ) : null}
 
                             <button
                                 type="button"
@@ -97,7 +123,6 @@ export function Dashboard() {
 
                 {profile?.role === 'admin' ? (
                     <div className="grid gap-6">
-                        <AdminEnrollmentPanel />
                         <AdminCourseBuilder />
                     </div>
                 ) : (

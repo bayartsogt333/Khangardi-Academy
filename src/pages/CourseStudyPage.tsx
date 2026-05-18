@@ -45,6 +45,11 @@ export function CourseStudyPage() {
         [tree.sections],
     )
 
+    const completionPercent = useMemo(() => {
+        if (lessonCount === 0) return 0
+        return Math.round((completedLessonIds.length / lessonCount) * 100)
+    }, [completedLessonIds.length, lessonCount])
+
     const canAccess = profile?.role === 'admin' || hasAccess
 
     const loadStudy = async () => {
@@ -364,10 +369,15 @@ export function CourseStudyPage() {
                                                             : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
                                                             }`}
                                                     >
-                                                        <span className="font-medium text-white">{lesson.title}</span>
-                                                        <small className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                                                            Open
-                                                        </small>
+                                                        <div className="flex items-center gap-3">
+                                                            {completedLessonIds.includes(lesson.id) ? (
+                                                                <span className="text-emerald-300">✓</span>
+                                                            ) : (
+                                                                <span className="w-4" />
+                                                            )}
+                                                            <span className="font-medium text-white">{lesson.title}</span>
+                                                        </div>
+                                                        <small className="text-xs uppercase tracking-[0.24em] text-slate-500">Open</small>
                                                     </button>
                                                 ))}
                                             </div>
@@ -390,6 +400,14 @@ export function CourseStudyPage() {
                                         <p className="max-w-3xl text-sm leading-7 text-slate-300">
                                             {selectedLesson?.notes || 'Choose a lesson from the section list to see notes and video.'}
                                         </p>
+                                        {lessonCount > 0 ? (
+                                            <div className="mt-3 w-full max-w-md">
+                                                <div className="mb-1 text-xs text-slate-400">Progress — {completionPercent}%</div>
+                                                <div className="h-2 w-full rounded-full bg-slate-800">
+                                                    <div className="h-2 rounded-full bg-emerald-400" style={{ width: `${completionPercent}%` }} />
+                                                </div>
+                                            </div>
+                                        ) : null}
                                     </div>
 
                                     <div className="flex flex-wrap gap-2 text-xs text-slate-300">
