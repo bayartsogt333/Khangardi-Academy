@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: allow a signed-in user to create their own profile document under /users/{uid}
+    // Users may read their own profile; admins may read any profile.
+    // Only admins (custom claim `admin`) may change the `role` field or delete profiles.
+    match /users/{userId} {
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        // ensure the email in the incoming profile matches the authenticated token's email
+        && (request.resource.data.email == request.auth.token.email || request.auth.token.email == null);
+
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+
+      allow update: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true)
+        // non-admins may not change the `role` field
+        && (request.auth.token.admin == true || request.resource.data.role == resource.data.role);
+
+      allow delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Community posts: anybody can read posts; authenticated users can create posts where
+    // `authorId` equals their uid. Only the author or admins can modify/delete a post.
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
+    }
+
+    // Classrooms: allow read for authenticated users; creation requires auth; admin-only updates/deletes.
+    match /classrooms/{classId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Deny everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
