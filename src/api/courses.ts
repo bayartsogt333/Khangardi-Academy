@@ -128,6 +128,19 @@ function normalizeResourceLinks(input: Array<{ id: string; title: string; url: s
         .filter((item) => item.url)
 }
 
+async function deleteLessonProgressForUsers(courseId: string, lessonIds: string[]) {
+    if (!lessonIds.length) return
+
+    const enrollmentsSnapshot = await getDocs(collection(db, 'courses', courseId, 'enrollments'))
+    const userIds = enrollmentsSnapshot.docs.map((item) => item.id)
+
+    await Promise.all(
+        userIds.flatMap((userId) =>
+            lessonIds.map((lessonId) => deleteDoc(doc(db, 'courses', courseId, 'lessonProgress', userId, 'lessons', lessonId))),
+        ),
+    )
+}
+
 export async function loadAdminCourses(): Promise<CourseRecord[]> {
     const coursesRef = collection(db, 'courses')
     const snapshot = await getDocs(query(coursesRef, orderBy('createdAt', 'desc')))
@@ -261,6 +274,17 @@ export async function deleteCourse(courseId: string) {
     }
 
     const sectionsSnapshot = await getDocs(query(collection(db, 'courses', courseId, 'sections'), orderBy('order', 'asc')))
+    const lessonIds = await Promise.all(
+        sectionsSnapshot.docs.map(async (sectionDoc) => {
+            const lessonsSnapshot = await getDocs(
+                query(collection(db, 'courses', courseId, 'sections', sectionDoc.id, 'lessons'), orderBy('order', 'asc')),
+            )
+
+            return lessonsSnapshot.docs.map((lessonDoc) => lessonDoc.id)
+        }),
+    )
+
+    await deleteLessonProgressForUsers(courseId, lessonIds.flat())
 
     await Promise.all(
         sectionsSnapshot.docs.map(async (sectionDoc) => {
@@ -307,6 +331,11 @@ export async function updateSection(courseId: string, sectionId: string, input: 
 export async function deleteSection(courseId: string, sectionId: string) {
     const lessonsRef = collection(db, 'courses', courseId, 'sections', sectionId, 'lessons')
     const lessonsSnapshot = await getDocs(query(lessonsRef, orderBy('order', 'asc')))
+
+    await deleteLessonProgressForUsers(
+        courseId,
+        lessonsSnapshot.docs.map((lessonDoc) => lessonDoc.id),
+    )
 
     await Promise.all(
         lessonsSnapshot.docs.map((lessonDoc) => deleteDoc(doc(db, 'courses', courseId, 'sections', sectionId, 'lessons', lessonDoc.id))),
@@ -371,6 +400,8 @@ export async function updateLesson(courseId: string, sectionId: string, lessonId
 }
 
 export async function deleteLesson(courseId: string, sectionId: string, lessonId: string) {
+    await deleteLessonProgressForUsers(courseId, [lessonId])
+
     await deleteDoc(doc(db, 'courses', courseId, 'sections', sectionId, 'lessons', lessonId))
 
     const remainingLessonsSnapshot = await getDocs(

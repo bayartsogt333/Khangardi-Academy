@@ -126,6 +126,15 @@ export function AdminCourseBuilder() {
         () => tree.sections.reduce((total, section) => total + section.lessons.length, 0),
         [tree.sections],
     )
+    const selectedCourseCounts = useMemo(
+        () => ({
+            sectionCount: tree.sections.length,
+            lessonCount,
+        }),
+        [lessonCount, tree.sections.length],
+    )
+    const selectedSectionLessonCount = selectedSection?.lessons.length ?? 0
+    const selectedLessonLinkCount = selectedLesson?.resourceLinks.length ?? 0
 
     const reloadCourses = async (preferredCourseId?: string | null, options?: { resetSelection?: boolean }) => {
         const nextCourses = await loadAdminCourses()
@@ -568,11 +577,36 @@ export function AdminCourseBuilder() {
                                         <h3 className="text-xl font-semibold text-white">Confirm delete</h3>
                                         <p className="mt-2 text-sm leading-6 text-slate-300">
                                             {deleteTarget.kind === 'course'
-                                                ? `Delete the course “${deleteTarget.title}” and all of its sections, lessons, enrollments, and progress?`
+                                                ? `Delete the course “${deleteTarget.title}” and all of its sections, lessons, enrollments, progress, and thumbnail?`
                                                 : deleteTarget.kind === 'section'
                                                     ? `Delete the section “${deleteTarget.title}” and all lessons inside it?`
                                                     : `Delete the lesson “${deleteTarget.title}”?`}
                                         </p>
+
+                                        <div className="mt-4 grid gap-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-sm text-slate-300">
+                                            {deleteTarget.kind === 'course' ? (
+                                                <>
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <span>Sections to remove</span>
+                                                        <strong className="text-white">{selectedCourseCounts.sectionCount}</strong>
+                                                    </div>
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <span>Lessons to remove</span>
+                                                        <strong className="text-white">{selectedCourseCounts.lessonCount}</strong>
+                                                    </div>
+                                                </>
+                                            ) : deleteTarget.kind === 'section' ? (
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <span>Lessons inside section</span>
+                                                    <strong className="text-white">{selectedSectionLessonCount}</strong>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <span>Resource links in lesson</span>
+                                                    <strong className="text-white">{selectedLessonLinkCount}</strong>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
