@@ -863,18 +863,6 @@ export function AdminCourseBuilder() {
                         </div>
 
                         <div className="space-y-3">
-                            <div className="flex items-center justify-between gap-3">
-                                <span className="text-sm font-medium text-slate-200">Links</span>
-                                <button
-                                    type="button"
-                                    onClick={addResourceLinkRow}
-                                    disabled={!selection.sectionId}
-                                    className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300/40 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    + Add link
-                                </button>
-                            </div>
-
                             <label>
                                 <span>Rich notes</span>
                                 <textarea
@@ -887,6 +875,17 @@ export function AdminCourseBuilder() {
                                     disabled={!selection.sectionId}
                                 />
                             </label>
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm font-medium text-slate-200">Links</span>
+                                <button
+                                    type="button"
+                                    onClick={addResourceLinkRow}
+                                    disabled={!selection.sectionId}
+                                    className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300/40 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    + Add link
+                                </button>
+                            </div>
                             <div className="space-y-3">
                                 {lessonDraft.resourceLinks.map((link, index) => (
                                     <div key={link.id} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 md:grid-cols-[1fr_1.2fr_auto] md:items-end">

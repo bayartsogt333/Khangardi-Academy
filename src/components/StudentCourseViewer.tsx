@@ -11,6 +11,17 @@ function youtubeEmbedUrl(videoId?: string | null) {
     return videoId ? `https://www.youtube.com/embed/${videoId}` : null
 }
 
+function LinkGlyph() {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 shrink-0">
+            <path
+                fill="currentColor"
+                d="M10.59 13.41a1 1 0 0 0 1.41 0l2.59-2.59a3 3 0 0 0-4.24-4.24L8 9.53a1 1 0 1 0 1.41 1.41l2.35-2.35a1 1 0 1 1 1.41 1.41l-2.59 2.59a1 1 0 0 0 0 1.41Zm2.82-2.82a1 1 0 0 0-1.41 0l-2.59 2.59a3 3 0 1 0 4.24 4.24l1.94-1.94a1 1 0 1 0-1.41-1.41l-1.94 1.94a1 1 0 1 1-1.41-1.41l2.59-2.59a1 1 0 0 0 0-1.41Z"
+            />
+        </svg>
+    )
+}
+
 export function StudentCourseViewer() {
     const [courses, setCourses] = useState<CourseRecord[]>([])
     const [tree, setTree] = useState<CourseTree>({ course: null, sections: [] })
@@ -18,6 +29,7 @@ export function StudentCourseViewer() {
     const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
     const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
+    const [selectedCourseLoadingId, setSelectedCourseLoadingId] = useState<string | null>(null)
     const [error, setError] = useState('')
 
     const selectedCourse = tree.course
@@ -30,13 +42,20 @@ export function StudentCourseViewer() {
     )
     const initialLoading = loading && !courses.length && !tree.course
 
-    const loadViewer = async (preferredCourseId?: string | null) => {
-        setLoading(true)
+    const loadViewer = async (preferredCourseId?: string | null, options?: { reloadCourses?: boolean; showLoading?: boolean }) => {
+        const { reloadCourses = true, showLoading = true } = options ?? {}
+
+        if (showLoading) {
+            setLoading(true)
+        }
         setError('')
 
         try {
-            const nextCourses = await loadPublishedCourses()
-            setCourses(nextCourses)
+            const nextCourses = reloadCourses ? await loadPublishedCourses() : courses
+
+            if (reloadCourses) {
+                setCourses(nextCourses)
+            }
 
             const nextCourseId = preferredCourseId && nextCourses.some((course) => course.id === preferredCourseId)
                 ? preferredCourseId
@@ -85,60 +104,23 @@ export function StudentCourseViewer() {
             const firebaseError = viewerError as { message?: string }
             setError(firebaseError.message || 'Failed to load courses.')
         } finally {
-            setLoading(false)
+            if (showLoading) {
+                setLoading(false)
+            }
+            setSelectedCourseLoadingId(null)
         }
     }
 
     useEffect(() => {
-        void loadViewer()
+        void loadViewer(undefined, { reloadCourses: true, showLoading: true })
     }, [])
-
-    useEffect(() => {
-        if (!selectedCourseId) return
-
-        void (async () => {
-            try {
-                const nextTree = await loadCourseTree(selectedCourseId)
-                if (!nextTree) {
-                    setTree({ course: null, sections: [] })
-                    return
-                }
-
-                setTree({
-                    course: {
-                        id: nextTree.id,
-                        title: nextTree.title,
-                        slug: nextTree.slug,
-                        description: nextTree.description,
-                        category: nextTree.category,
-                        level: nextTree.level,
-                        status: nextTree.status,
-                        thumbnailURL: nextTree.thumbnailURL,
-                        thumbnailPath: nextTree.thumbnailPath,
-                        createdBy: nextTree.createdBy,
-                        createdAt: nextTree.createdAt,
-                        updatedAt: nextTree.updatedAt,
-                    },
-                    sections: nextTree.sections,
-                })
-
-                const nextSection = nextTree.sections.find((section) => section.id === selectedSectionId) ?? nextTree.sections[0] ?? null
-                const nextLesson = nextSection?.lessons.find((lesson) => lesson.id === selectedLessonId) ?? nextSection?.lessons[0] ?? null
-                setSelectedSectionId(nextSection?.id ?? null)
-                setSelectedLessonId(nextLesson?.id ?? null)
-            } catch (viewerError) {
-                const firebaseError = viewerError as { message?: string }
-                setError(firebaseError.message || 'Failed to refresh course.')
-            }
-        })()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedCourseId])
 
     const handleCourseSelect = (courseId: string) => {
         setSelectedCourseId(courseId)
         setSelectedSectionId(null)
         setSelectedLessonId(null)
-        void loadViewer(courseId)
+        setSelectedCourseLoadingId(courseId)
+        void loadViewer(courseId, { reloadCourses: false, showLoading: false })
     }
 
     const handleSectionSelect = (sectionId: string) => {
@@ -221,8 +203,15 @@ export function StudentCourseViewer() {
                                     type="button"
                                     className={course.id === selectedCourseId ? 'student-list__item active' : 'student-list__item'}
                                     onClick={() => handleCourseSelect(course.id)}
+                                    disabled={selectedCourseLoadingId !== null && selectedCourseLoadingId !== course.id}
+                                    aria-busy={selectedCourseLoadingId === course.id}
                                 >
-                                    <span>{course.title}</span>
+                                    <span className="flex items-center gap-2">
+                                        {selectedCourseLoadingId === course.id ? (
+                                            <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" />
+                                        ) : null}
+                                        <span>{course.title}</span>
+                                    </span>
                                     <small>{course.category || course.level || 'Course'}</small>
                                 </button>
                             ))}
@@ -301,21 +290,6 @@ export function StudentCourseViewer() {
                             <article className="course-studio-card student-lesson-view">
                                 <span className="card-kicker">Lesson</span>
                                 <h3>{selectedLesson?.title || 'Select a lesson'}</h3>
-                                {selectedLesson?.resourceLinks.length ? (
-                                    <div className="space-y-2">
-                                        <span className="card-kicker">Links</span>
-                                        <ul className="space-y-1 text-sm">
-                                            {selectedLesson.resourceLinks.map((link) => (
-                                                <li key={`${link.title}-${link.url}`}>
-                                                    <a href={link.url} target="_blank" rel="noreferrer" className="text-cyan-300 underline decoration-cyan-300/40 underline-offset-4">
-                                                        {link.title || link.url}
-                                                    </a>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ) : null}
-
                                 {youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ? (
                                     <div className="video-frame">
                                         <iframe
@@ -334,6 +308,27 @@ export function StudentCourseViewer() {
                                     ) : null}
                                     <p>{selectedLesson?.notes || 'Open a lesson to view notes and video playback.'}</p>
                                 </div>
+
+                                {selectedLesson?.resourceLinks.length ? (
+                                    <div className="space-y-2 border-t border-slate-800 pt-5">
+                                        <span className="card-kicker">Links</span>
+                                        <ul className="space-y-2 text-sm">
+                                            {selectedLesson.resourceLinks.map((link) => (
+                                                <li key={`${link.title}-${link.url}`}>
+                                                    <a
+                                                        href={link.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-2 rounded-full border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
+                                                    >
+                                                        <LinkGlyph />
+                                                        <span>{link.title || link.url}</span>
+                                                    </a>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ) : null}
                             </article>
                         </section>
                     </div>

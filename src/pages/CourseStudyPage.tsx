@@ -21,6 +21,25 @@ function youtubeEmbedUrl(videoId?: string | null) {
     return videoId ? `https://www.youtube.com/embed/${videoId}` : null
 }
 
+function LinkGlyph() {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 shrink-0">
+            <path
+                fill="currentColor"
+                d="M10.59 13.41a1 1 0 0 0 1.41 0l2.59-2.59a3 3 0 0 0-4.24-4.24L8 9.53a1 1 0 1 0 1.41 1.41l2.35-2.35a1 1 0 1 1 1.41 1.41l-2.59 2.59a1 1 0 0 0 0 1.41Zm2.82-2.82a1 1 0 0 0-1.41 0l-2.59 2.59a3 3 0 1 0 4.24 4.24l1.94-1.94a1 1 0 1 0-1.41-1.41l-1.94 1.94a1 1 0 1 1-1.41-1.41l2.59-2.59a1 1 0 0 0 0-1.41Z"
+            />
+        </svg>
+    )
+}
+
+function CheckGlyph() {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 shrink-0 text-emerald-300">
+            <path fill="currentColor" d="M9.2 16.2 4.9 11.9l1.4-1.4 2.9 2.9 8.5-8.5 1.4 1.4-9.9 9.9Z" />
+        </svg>
+    )
+}
+
 export function CourseStudyPage() {
     const { courseId } = useParams()
     const { logout, profile } = useAuth()
@@ -195,24 +214,14 @@ export function CourseStudyPage() {
         }
     }
 
-    if (initialLoading) {
-        return (
-            <main className="min-h-screen bg-slate-950 text-slate-100">
-                <section className="mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8">
-                    <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-8 text-center shadow-2xl shadow-black/30">
-                        <div className="text-xs uppercase tracking-[0.3em] text-cyan-300">Learning space</div>
-                        <h1 className="mt-3 text-3xl font-semibold text-white">Loading course…</h1>
-                        <p className="mt-3 text-sm leading-7 text-slate-400">Fetching course details and access state.</p>
-                    </div>
-                </section>
-            </main>
-        )
-    }
-
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-                {loading ? (
+                {initialLoading ? (
+                    <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+                        Loading course…
+                    </div>
+                ) : loading ? (
                     <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
                         Loading course content…
                     </div>
@@ -372,16 +381,22 @@ export function CourseStudyPage() {
                                                         onClick={() => setSelectedLessonId(lesson.id)}
                                                         className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${lesson.id === selectedLessonId
                                                             ? 'border-indigo-400/40 bg-indigo-400/10 text-white'
-                                                            : completedLessonIds.includes(lesson.id)
-                                                                ? 'border-emerald-400/25 bg-emerald-400/8 text-emerald-50 hover:border-emerald-300/40'
-                                                                : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
+                                                            : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
                                                             }`}
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            <span className={`w-8 text-xs font-semibold ${completedLessonIds.includes(lesson.id) ? 'text-emerald-300' : 'text-slate-400'}`}>{lessonIndex + 1}.</span>
-                                                            <span className={`font-medium ${completedLessonIds.includes(lesson.id) ? 'text-emerald-100' : 'text-white'}`}>{lesson.title}</span>
+                                                            <span className="w-8 text-xs font-semibold text-slate-400">{lessonIndex + 1}.</span>
+                                                            <span className="font-medium text-white">{lesson.title}</span>
                                                         </div>
-                                                        <small className={`text-xs uppercase tracking-[0.24em] ${completedLessonIds.includes(lesson.id) ? 'text-emerald-200' : 'text-slate-500'}`}>Open</small>
+                                                        <small className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                                                            {completedLessonIds.includes(lesson.id) ? (
+                                                                <span className="inline-flex items-center gap-2 text-emerald-300" aria-label="Completed" title="Completed">
+                                                                    <CheckGlyph />
+                                                                </span>
+                                                            ) : (
+                                                                'Open'
+                                                            )}
+                                                        </small>
                                                     </button>
                                                 ))}
                                             </div>
@@ -401,20 +416,6 @@ export function CourseStudyPage() {
                                         <h2 className="text-3xl font-semibold text-white">
                                             {selectedLesson?.title || 'Pick a lesson'}
                                         </h2>
-                                        {selectedLesson?.resourceLinks.length ? (
-                                            <div className="space-y-2">
-                                                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Links</div>
-                                                <ul className="space-y-1 text-sm">
-                                                    {selectedLesson.resourceLinks.map((link) => (
-                                                        <li key={`${link.title}-${link.url}`}>
-                                                            <a href={link.url} target="_blank" rel="noreferrer" className="text-cyan-300 underline decoration-cyan-300/40 underline-offset-4">
-                                                                {link.title || link.url}
-                                                            </a>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        ) : null}
                                         {lessonCount > 0 ? (
                                             <div className="mt-3 w-full max-w-md">
                                                 <div className="mb-1 text-xs text-slate-400">Progress — {completionPercent}%</div>
@@ -459,9 +460,7 @@ export function CourseStudyPage() {
 
                             <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20">
                                 <div className="space-y-3">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                                        Notes
-                                    </span>
+                                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Notes</span>
                                     {selectedLesson?.notesTitle ? (
                                         <h3 className="text-lg font-semibold text-cyan-100">{selectedLesson.notesTitle}</h3>
                                     ) : null}
@@ -469,6 +468,27 @@ export function CourseStudyPage() {
                                         {selectedLesson?.notes || 'Choose a lesson from the section list to see notes and video.'}
                                     </p>
                                 </div>
+
+                                {selectedLesson?.resourceLinks.length ? (
+                                    <div className="mt-6 space-y-3 border-t border-slate-800 pt-5">
+                                        <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Links</div>
+                                        <ul className="space-y-2 text-sm">
+                                            {selectedLesson.resourceLinks.map((link) => (
+                                                <li key={`${link.title}-${link.url}`}>
+                                                    <a
+                                                        href={link.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-2 rounded-full border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
+                                                    >
+                                                        <LinkGlyph />
+                                                        <span>{link.title || link.url}</span>
+                                                    </a>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ) : null}
                             </article>
 
                             <div className="flex flex-wrap gap-3">

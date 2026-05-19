@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { loadPublishedCourses } from '../api/courses'
 import { useAuth } from '../context/AuthContext'
 import type { CourseRecord } from '../types/course'
 
 export function LearningHomePage() {
     const { logout, profile } = useAuth()
+    const navigate = useNavigate()
     const [courses, setCourses] = useState<CourseRecord[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [openCourseId, setOpenCourseId] = useState('')
 
     useEffect(() => {
         let active = true
@@ -55,12 +57,19 @@ export function LearningHomePage() {
 
                         <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:flex-row sm:items-center">
                             {profile?.role === 'admin' ? (
-                                <Link
-                                    to="/admin"
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setOpenCourseId('/admin')
+                                        navigate('/admin')
+                                    }}
                                     className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
                                 >
-                                    Admin studio
-                                </Link>
+                                    <span className="inline-flex items-center gap-2">
+                                        {openCourseId === '/admin' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
+                                        <span>Admin studio</span>
+                                    </span>
+                                </button>
                             ) : null}
 
                             <div className="rounded-2xl bg-slate-900 px-4 py-3">
@@ -114,9 +123,15 @@ export function LearningHomePage() {
                 ) : courses.length ? (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {courses.map((course) => (
-                            <article
+                            <button
                                 key={course.id}
-                                className="group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 shadow-xl shadow-black/20 transition hover:-translate-y-1 hover:border-cyan-400/40"
+                                type="button"
+                                onClick={() => {
+                                    setOpenCourseId(course.id)
+                                    navigate(`/learn/${course.id}`)
+                                }}
+                                disabled={openCourseId !== '' && openCourseId !== course.id}
+                                className="group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 text-left shadow-xl shadow-black/20 transition hover:-translate-y-1 hover:border-cyan-400/40 disabled:cursor-wait"
                             >
                                 <div className="relative aspect-[16/9] overflow-hidden bg-slate-950">
                                     {course.thumbnailURL ? (
@@ -154,14 +169,14 @@ export function LearningHomePage() {
                                         </span>
                                     </div>
 
-                                    <Link
-                                        to={`/learn/${course.id}`}
-                                        className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
-                                    >
-                                        Open course
-                                    </Link>
+                                    <div className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300">
+                                        <span className="inline-flex items-center gap-2">
+                                            {openCourseId === course.id ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
+                                            <span>Open course</span>
+                                        </span>
+                                    </div>
                                 </div>
-                            </article>
+                            </button>
                         ))}
                     </div>
                 ) : (

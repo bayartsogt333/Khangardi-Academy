@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import type { UserProfile } from '../types/auth'
 
 type AdminHeaderProps = {
@@ -9,6 +10,9 @@ type AdminHeaderProps = {
 }
 
 export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }: AdminHeaderProps) {
+    const navigate = useNavigate()
+    const [busyTarget, setBusyTarget] = useState<string | null>(null)
+
     const displayName = profile?.displayName || 'Admin'
     const email = profile?.email || ''
     const initials = displayName
@@ -33,31 +37,58 @@ export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }:
                 </div>
 
                 <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:flex-row sm:items-center">
-                    <Link
-                        to="/learn"
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (activePage === 'studio') return
+                            setBusyTarget('/learn')
+                            navigate('/learn')
+                        }}
+                        disabled={activePage === 'studio' || (busyTarget !== null && busyTarget !== '/learn')}
                         className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
                     >
-                        Learning space
-                    </Link>
+                        <span className="inline-flex items-center gap-2">
+                            {busyTarget === '/learn' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
+                            <span>Learning space</span>
+                        </span>
+                    </button>
 
-                    <Link
-                        to="/admin/enrollments"
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (activePage === 'enrollments') return
+                            setBusyTarget('/admin/enrollments')
+                            navigate('/admin/enrollments')
+                        }}
+                        disabled={activePage === 'enrollments' || (busyTarget !== null && busyTarget !== '/admin/enrollments')}
                         className={`relative rounded-2xl border px-4 py-3 text-sm font-medium transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white ${activePage === 'enrollments' ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100'}`}
                     >
-                        Enrollment admin
+                        <span className="inline-flex items-center gap-2">
+                            {busyTarget === '/admin/enrollments' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
+                            <span>Enrollment admin</span>
+                        </span>
                         {pendingCount > 0 ? (
                             <span className="absolute -top-2 -right-2 inline-flex items-center justify-center rounded-full bg-rose-500 px-2 py-1 text-xs font-semibold text-white">
                                 {pendingCount}
                             </span>
                         ) : null}
-                    </Link>
+                    </button>
 
-                    <Link
-                        to="/admin"
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (activePage === 'studio') return
+                            setBusyTarget('/admin')
+                            navigate('/admin')
+                        }}
+                        disabled={activePage === 'studio' || (busyTarget !== null && busyTarget !== '/admin')}
                         className={`rounded-2xl border px-4 py-3 text-sm font-medium transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white ${activePage === 'studio' ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100'}`}
                     >
-                        Admin studio
-                    </Link>
+                        <span className="inline-flex items-center gap-2">
+                            {busyTarget === '/admin' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
+                            <span>Admin studio</span>
+                        </span>
+                    </button>
 
                     <button
                         type="button"

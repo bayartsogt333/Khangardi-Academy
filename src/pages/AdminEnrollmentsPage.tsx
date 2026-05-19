@@ -4,7 +4,6 @@ import { loadAllUsers } from '../api/users'
 import { loadAdminCourses } from '../api/courses'
 import type { CourseRecord, EnrollmentRecord } from '../types/course'
 import type { UserProfile } from '../types/auth'
-import { Link } from 'react-router-dom'
 import { collection, onSnapshot, query } from 'firebase/firestore'
 import { db } from '../api/firebase'
 import { AdminHeader } from '../components/AdminHeader'
@@ -142,25 +141,16 @@ export function AdminEnrollmentsPage() {
         }
     }
 
-    if (loading) {
-        return (
-            <main className="min-h-screen bg-slate-950 text-slate-100">
-                <section className="mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8">
-                    <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-8 text-center shadow-2xl shadow-black/30">
-                        <div className="text-xs uppercase tracking-[0.3em] text-cyan-300">Enrollment admin</div>
-                        <h1 className="mt-3 text-3xl font-semibold text-white">Loading…</h1>
-                        <p className="mt-3 text-sm leading-7 text-slate-400">Fetching courses and users.</p>
-                        <p className="mt-4 text-sm text-slate-400">Return to <Link to="/admin">Admin studio</Link>.</p>
-                    </div>
-                </section>
-            </main>
-        )
-    }
-
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="mx-auto w-full max-w-7xl px-4 py-6">
                 <AdminHeader profile={profile} onLogout={logout} activePage="enrollments" pendingCount={enrollments.filter((item) => item.status === 'pending').length} />
+
+                {loading ? (
+                    <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+                        Loading courses and users…
+                    </div>
+                ) : null}
 
                 <div className="mt-4 flex items-center justify-between rounded-3xl border border-slate-800/80 bg-slate-900/80 p-4">
                     <div>

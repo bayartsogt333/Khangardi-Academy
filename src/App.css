@@ -19,6 +19,14 @@
     min-height: 100vh;
 }
 
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
 .app-loading,
 .auth-shell,
 .dashboard-shell {
