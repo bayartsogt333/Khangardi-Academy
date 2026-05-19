@@ -17,9 +17,37 @@ export function Snowfall() {
 
     const glows = useMemo(
         () => [
-            { id: 'glow-1', left: -8, top: 10, size: 46, hue: 'rgba(103, 232, 249, 0.20)', blur: 90, duration: 26 },
-            { id: 'glow-2', left: 62, top: -12, size: 42, hue: 'rgba(129, 140, 248, 0.18)', blur: 100, duration: 30 },
-            { id: 'glow-3', left: 78, top: 56, size: 36, hue: 'rgba(186, 230, 253, 0.12)', blur: 110, duration: 34 },
+            { id: 'glow-1', left: -10, top: 8, size: 52, hue: 'rgba(103, 232, 249, 0.14)', blur: 96, duration: 28 },
+            { id: 'glow-2', left: 58, top: -14, size: 48, hue: 'rgba(129, 140, 248, 0.14)', blur: 104, duration: 34 },
+            { id: 'glow-3', left: 76, top: 56, size: 40, hue: 'rgba(186, 230, 253, 0.10)', blur: 112, duration: 38 },
+        ],
+        [],
+    )
+
+    const auroraRibbons = useMemo(
+        () => [
+            {
+                id: 'aurora-1',
+                left: '-12%',
+                top: '8%',
+                width: '128%',
+                height: '18vh',
+                background: 'linear-gradient(90deg, transparent 0%, rgba(34, 211, 238, 0.08) 18%, rgba(103, 232, 249, 0.18) 46%, rgba(129, 140, 248, 0.08) 70%, transparent 100%)',
+                blur: 64,
+                rotate: '-8deg',
+                duration: 24,
+            },
+            {
+                id: 'aurora-2',
+                left: '-8%',
+                top: '18%',
+                width: '118%',
+                height: '14vh',
+                background: 'linear-gradient(90deg, transparent 0%, rgba(165, 243, 252, 0.05) 20%, rgba(167, 139, 250, 0.16) 50%, rgba(103, 232, 249, 0.08) 76%, transparent 100%)',
+                blur: 78,
+                rotate: '10deg',
+                duration: 30,
+            },
         ],
         [],
     )
@@ -40,6 +68,26 @@ export function Snowfall() {
             `}</style>
 
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(103,232,249,0.10),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(129,140,248,0.08),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.06),rgba(15,23,42,0.18))]" />
+
+            {auroraRibbons.map((ribbon) => (
+                <span
+                    key={ribbon.id}
+                    aria-hidden
+                    style={{
+                        position: 'absolute',
+                        left: ribbon.left,
+                        top: ribbon.top,
+                        width: ribbon.width,
+                        height: ribbon.height,
+                        background: ribbon.background,
+                        filter: `blur(${ribbon.blur}px)`,
+                        transform: `rotate(${ribbon.rotate}) translate3d(0, 0, 0)`,
+                        opacity: 0.9,
+                        borderRadius: '9999px',
+                        animation: `khg-drift ${ribbon.duration}s ease-in-out infinite`,
+                    }}
+                />
+            ))}
 
             {glows.map((glow) => (
                 <span

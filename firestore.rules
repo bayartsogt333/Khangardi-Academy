@@ -36,6 +36,11 @@ service cloud.firestore {
 
     // Community posts: anybody can read posts; authenticated users can create posts where
     // `authorId` equals their uid. Only the author or admins can modify/delete a post.
+    match /community/groups/items/{groupId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /posts/{postId} {
       allow read: if true;
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
@@ -48,17 +53,37 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.text is string
-        && request.resource.data.text.size() <= 2000;
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.groupId is string
+        && request.resource.data.groupType in ['general', 'course', 'custom']
+        && (
+          (request.resource.data.groupType == 'general' && request.resource.data.groupId == 'general')
+          || (
+            request.resource.data.groupType == 'course'
+            && request.resource.data.courseId is string
+            && request.resource.data.groupId == request.resource.data.courseId
+            && exists(/databases/$(database)/documents/courses/$(request.resource.data.courseId))
+            && get(/databases/$(database)/documents/courses/$(request.resource.data.courseId)).data.status == 'published'
+          )
+          || (
+            request.resource.data.groupType == 'custom'
+            && exists(/databases/$(database)/documents/community/groups/items/$(request.resource.data.groupId))
+          )
+        );
 
       // Allow updates if author/admin, or allow authenticated users to only toggle likes (add/remove their uid)
       allow update: if request.auth != null && (
         request.auth.uid == resource.data.authorId || isAdmin() || (
           // only 'likes' and 'updatedAt' may be changed by non-authors
-          request.resource.data.keys().hasOnly(['likes','updatedAt','authorId','authorName','text','createdAt'])
+          request.resource.data.keys().hasOnly(['likes','updatedAt','authorId','authorName','text','createdAt','groupId','groupType','courseId','groupTitle'])
           && request.resource.data.authorId == resource.data.authorId
           && request.resource.data.authorName == resource.data.authorName
           && request.resource.data.text == resource.data.text
           && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.groupId == resource.data.groupId
+          && request.resource.data.groupType == resource.data.groupType
+          && request.resource.data.courseId == resource.data.courseId
+          && request.resource.data.groupTitle == resource.data.groupTitle
           // ensure likes change is either addition or removal of the current user's id
           && (
             (request.resource.data.likes.hasAll(resource.data.likes) && request.resource.data.likes.size() == resource.data.likes.size() + 1 && request.resource.data.likes.hasAny([request.auth.uid]))

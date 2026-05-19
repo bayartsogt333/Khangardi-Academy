@@ -3,6 +3,7 @@ import {
     addDoc,
     query,
     orderBy,
+    where,
     onSnapshot,
     serverTimestamp,
     doc,
@@ -13,9 +14,24 @@ import {
     getDocs,
 } from 'firebase/firestore'
 import { db } from './firebase'
+import { loadPublishedCourses } from './courses'
+
+export type CommunityGroup = {
+    id: string
+    title: string
+    description: string
+    kind: 'general' | 'course' | 'custom'
+    courseId?: string | null
+    createdBy?: string | null
+    createdAt?: any
+    updatedAt?: any
+}
 
 export type CommunityPost = {
     id: string
+    groupId: string
+    groupType: 'general' | 'course' | 'custom'
+    courseId?: string | null
     authorId: string
     authorName: string
     text: string
@@ -32,6 +48,44 @@ export type CommunityComment = {
     createdAt: any
 }
 
+export async function loadCommunityGroups(): Promise<CommunityGroup[]> {
+    const customGroupsRef = collection(db, 'community', 'groups', 'items')
+    const [courses, customGroupsSnapshot] = await Promise.all([
+        loadPublishedCourses(),
+        getDocs(query(customGroupsRef, orderBy('createdAt', 'asc'))),
+    ])
+
+    const generalGroup: CommunityGroup = {
+        id: 'general',
+        title: 'General',
+        description: 'Open discussion for announcements, updates, and community chat.',
+        kind: 'general',
+    }
+
+    const courseGroups: CommunityGroup[] = courses.map((course) => ({
+        id: course.id,
+        title: course.title,
+        description: course.description || 'Course discussion group',
+        kind: 'course',
+        courseId: course.id,
+    }))
+
+    const customGroups: CommunityGroup[] = customGroupsSnapshot.docs.map((item) => {
+        const data = item.data() as Partial<CommunityGroup>
+        return {
+            id: item.id,
+            title: data.title || 'Untitled group',
+            description: data.description || 'Community discussion group',
+            kind: 'custom',
+            createdBy: data.createdBy ?? null,
+            createdAt: data.createdAt ?? null,
+            updatedAt: data.updatedAt ?? null,
+        }
+    })
+
+    return [generalGroup, ...courseGroups, ...customGroups]
+}
+
 export function listenToPosts(onUpdate: (posts: CommunityPost[]) => void) {
     const postsRef = collection(db, 'community', 'posts', 'items')
     const q = query(postsRef, orderBy('createdAt', 'desc'))
@@ -41,9 +95,27 @@ export function listenToPosts(onUpdate: (posts: CommunityPost[]) => void) {
     })
 }
 
-export async function createPost(authorId: string, authorName: string, text: string) {
+export async function createGroup(title: string, description: string, createdBy: string) {
+    const groupsRef = collection(db, 'community', 'groups', 'items')
+    const docRef = await addDoc(groupsRef, {
+        title,
+        description,
+        kind: 'custom',
+        createdBy,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    })
+
+    return docRef.id
+}
+
+export async function createPost(group: CommunityGroup, authorId: string, authorName: string, text: string) {
     const postsRef = collection(db, 'community', 'posts', 'items')
     const docRef = await addDoc(postsRef, {
+        groupId: group.id,
+        groupType: group.kind,
+        courseId: group.courseId ?? null,
+        groupTitle: group.title,
         authorId,
         authorName,
         text,
@@ -52,6 +124,15 @@ export async function createPost(authorId: string, authorName: string, text: str
         updatedAt: serverTimestamp(),
     })
     return docRef.id
+}
+
+export function listenToGroupPosts(groupId: string, onUpdate: (posts: CommunityPost[]) => void) {
+    const postsRef = collection(db, 'community', 'posts', 'items')
+    const q = query(postsRef, where('groupId', '==', groupId), orderBy('createdAt', 'desc'))
+    return onSnapshot(q, (snapshot) => {
+        const posts: CommunityPost[] = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
+        onUpdate(posts)
+    })
 }
 
 export async function deletePost(postId: string) {

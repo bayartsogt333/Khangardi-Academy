@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Snowfall from './Snowfall'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Snowflake } from 'lucide-react'
 import type { UserProfile } from '../types/auth'
 
 type SiteHeaderProps = {
@@ -54,15 +55,27 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                             <div className="text-lg font-semibold text-white">Welcome, {displayName}</div>
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => setMobileMenuOpen((current) => !current)}
-                        className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400/60 hover:text-white"
-                        aria-expanded={mobileMenuOpen}
-                        aria-label="Toggle navigation menu"
-                    >
-                        {mobileMenuOpen ? 'Close' : 'Menu'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setSnowfallEnabled((s) => !s)}
+                            aria-pressed={snowfallEnabled}
+                            title={snowfallEnabled ? 'Disable winter mode' : 'Enable winter mode'}
+                            className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
+                        >
+                            <Snowflake className={`h-4 w-4 ${snowfallEnabled ? 'animate-pulse text-cyan-200' : 'text-slate-400'}`} />
+                            <span className="hidden sm:inline">Winter mode</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMobileMenuOpen((current) => !current)}
+                            className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400/60 hover:text-white"
+                            aria-expanded={mobileMenuOpen}
+                            aria-label="Toggle navigation menu"
+                        >
+                            {mobileMenuOpen ? 'Close' : 'Menu'}
+                        </button>
+                    </div>
                 </div>
 
                 <div
@@ -112,6 +125,16 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                                     className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-cyan-400/60 hover:text-white"
                                 >
                                     Logout
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setSnowfallEnabled((s) => !s)}
+                                    aria-pressed={snowfallEnabled}
+                                    title={snowfallEnabled ? 'Disable winter mode' : 'Enable winter mode'}
+                                    className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
+                                >
+                                    <Snowflake className={`h-4 w-4 ${snowfallEnabled ? 'animate-pulse text-cyan-200' : 'text-slate-400'}`} />
+                                    <span>Winter mode</span>
                                 </button>
                             </div>
                         </div>
@@ -175,10 +198,11 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                             type="button"
                             onClick={() => setSnowfallEnabled((s) => !s)}
                             aria-pressed={snowfallEnabled}
-                            title={snowfallEnabled ? 'Disable snowfall' : 'Enable snowfall'}
-                            className={`ml-2 rounded-2xl border px-3 py-2 text-sm transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
+                            title={snowfallEnabled ? 'Disable winter mode' : 'Enable winter mode'}
+                            className={`ml-2 inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
                         >
-                            ❄️
+                            <Snowflake className={`h-4 w-4 ${snowfallEnabled ? 'animate-pulse text-cyan-200' : 'text-slate-400'}`} />
+                            <span>Winter mode</span>
                         </button>
                     </div>
                 </div>
