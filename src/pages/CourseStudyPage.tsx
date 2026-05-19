@@ -354,10 +354,7 @@ export function CourseStudyPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleToggleSection(section)}
-                                            className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${section.id === selectedSectionId
-                                                ? 'border-cyan-400/40 bg-cyan-400/10 text-white'
-                                                : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
-                                                }`}
+                                            className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700`}
                                         >
                                             <div>
                                                 <div className="font-semibold text-white">{sectionIndex + 1}. {section.title}</div>
@@ -413,115 +410,106 @@ export function CourseStudyPage() {
                         </aside>
 
                         <section className="space-y-6">
-                            <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20">
-                                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                                    <div className="space-y-3">
-                                        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now studying</span>
-                                        <h1 className="text-2xl font-semibold text-white sm:text-3xl">{course.title}</h1>
-                                        <p className="max-w-3xl text-sm leading-7 text-slate-300">
-                                            {course.description || 'Choose a lesson from the section list to start learning.'}
-                                        </p>
-                                        {lessonCount > 0 ? (
-                                            <div className="mt-3 w-full max-w-md">
-                                                <div className="mb-1 text-xs text-slate-400">Progress — {completionPercent}%</div>
-                                                <div className="h-2 w-full rounded-full bg-slate-800">
-                                                    <div className="h-2 rounded-full bg-emerald-400" style={{ width: `${completionPercent}%` }} />
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-                                        <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
-                                            {selectedSection?.title || 'Section'}
-                                        </span>
-                                        <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
-                                            {selectedLesson?.title || 'Pick a lesson'}
-                                        </span>
-                                        <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
-                                            {course.category || 'Category'}
-                                        </span>
-                                        <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
-                                            {course.level || 'Level'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </article>
-
-                            <article className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/80 shadow-xl shadow-black/20">
-                                {youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ? (
-                                    <div className="aspect-video w-full">
-                                        <iframe
-                                            src={youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ?? undefined}
-                                            title={selectedLesson?.title || 'Lesson video'}
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowFullScreen
-                                            className="h-full w-full border-0"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="flex min-h-[320px] items-center justify-center px-6 text-center text-slate-400">
-                                        No video selected yet.
-                                    </div>
-                                )}
-                                <div className="border-t border-slate-800/80 bg-slate-950/40 p-6">
-                                    <div>
-                                        <div className="space-y-4">
-                                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Lesson notes</span>
-                                            <h2 className="text-2xl font-semibold text-white">
-                                                {selectedLesson?.notesTitle || selectedLesson?.title || 'Pick a lesson'}
-                                            </h2>
-                                            <p className="max-w-3xl whitespace-pre-line text-sm leading-7 text-slate-300">
-                                                {selectedLesson?.notes || 'Choose a lesson from the section list to see notes and resources.'}
-                                            </p>
+                            <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-0 shadow-xl shadow-black/20 overflow-hidden">
+                                <div className="p-6">
+                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                        <div>
+                                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now studying</span>
+                                            <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">{course.title}</h1>
+                                            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">{course.description || 'Choose a lesson from the section list to start learning.'}</p>
                                         </div>
 
-                                        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                                            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Resources</div>
+                                        <div className="mt-3 lg:mt-0">
+                                            <div className="w-full max-w-xs">
+                                                <div className="mb-2 text-xs text-slate-400">Progress</div>
+                                                <div className="relative h-6 w-full rounded-full bg-slate-800">
+                                                    <div className="absolute left-0 top-0 h-6 rounded-full bg-emerald-400" style={{ width: `${completionPercent}%` }} />
+                                                    <div className="relative z-10 flex h-6 items-center justify-center text-sm font-semibold text-slate-950">
+                                                        {completionPercent}%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                            {selectedLesson?.resourceLinks.length ? (
-                                                <ul className="mt-3 space-y-2 text-sm">
-                                                    {selectedLesson.resourceLinks.map((link) => (
-                                                        <li key={`${link.title}-${link.url}`} className="flex items-start gap-3">
-                                                            <a
-                                                                href={link.url}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="inline-flex flex-1 items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
-                                                            >
-                                                                <LinkGlyph />
-                                                                <span className="break-words">{link.title || link.url}</span>
-                                                            </a>
-                                                            <button
-                                                                type="button"
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        await navigator.clipboard.writeText(link.url)
-                                                                        setCopiedLink(link.url)
-                                                                        setTimeout(() => setCopiedLink(''), 1800)
-                                                                    } catch { }
-                                                                }}
-                                                                className="ml-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100"
-                                                            >
-                                                                {copiedLink === link.url ? 'Copied' : 'Copy'}
-                                                            </button>
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                <div className="border-t border-slate-800/80 bg-slate-900/60 p-6">
+                                    <div className="flex flex-col gap-6">
+                                        <div className="w-full">
+                                            {youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ? (
+                                                <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
+                                                    <iframe
+                                                        src={youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ?? undefined}
+                                                        title={selectedLesson?.title || 'Lesson video'}
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                        className="h-full w-full border-0"
+                                                    />
+                                                </div>
                                             ) : (
-                                                <p className="mt-3 text-sm text-slate-400">No resource links for this lesson.</p>
+                                                <div className="flex min-h-[320px] items-center justify-center px-6 text-center text-slate-400 rounded-xl border border-slate-800">
+                                                    No video selected yet.
+                                                </div>
                                             )}
+                                        </div>
 
-                                            <div className="mt-4">
-                                                {!isAdmin && selectedLesson ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleToggleLessonProgress}
-                                                        className="rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
-                                                    >
-                                                        {selectedLessonCompleted ? 'Mark incomplete' : 'Mark complete'}
-                                                    </button>
-                                                ) : null}
+                                        <div className="w-full">
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Lesson</div>
+                                                    <h2 className="mt-1 text-xl font-semibold text-white">{selectedLesson?.title || 'Pick a lesson'}</h2>
+                                                    <p className="mt-2 max-w-prose whitespace-pre-line text-sm leading-7 text-slate-300">{selectedLesson?.notes || 'Choose a lesson from the section list to see notes and resources.'}</p>
+                                                </div>
+
+                                                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                                                    <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Resources</div>
+
+                                                    {selectedLesson?.resourceLinks.length ? (
+                                                        <ul className="mt-3 space-y-2 text-sm">
+                                                            {selectedLesson.resourceLinks.map((link) => (
+                                                                <li key={`${link.title}-${link.url}`} className="flex items-start gap-3">
+                                                                    <a
+                                                                        href={link.url}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="inline-flex flex-1 items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
+                                                                    >
+                                                                        <LinkGlyph />
+                                                                        <span className="break-words">{link.title || link.url}</span>
+                                                                    </a>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                await navigator.clipboard.writeText(link.url)
+                                                                                setCopiedLink(link.url)
+                                                                                setTimeout(() => setCopiedLink(''), 1800)
+                                                                            } catch { }
+                                                                        }}
+                                                                        className="ml-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100"
+                                                                    >
+                                                                        {copiedLink === link.url ? 'Copied' : 'Copy'}
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    ) : (
+                                                        <p className="mt-3 text-sm text-slate-400">No resource links for this lesson.</p>
+                                                    )}
+
+                                                </div>
+
+                                                <div>
+                                                    {!isAdmin && selectedLesson ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleToggleLessonProgress}
+                                                            className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
+                                                        >
+                                                            {selectedLessonCompleted ? 'Mark incomplete' : 'Mark complete'}
+                                                        </button>
+                                                    ) : null}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

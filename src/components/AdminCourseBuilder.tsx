@@ -975,17 +975,7 @@ export function AdminCourseBuilder() {
                                 />
                             </label>
 
-                            <label>
-                                <span>Notes title</span>
-                                <input
-                                    value={lessonDraft.notesTitle}
-                                    onChange={(event) =>
-                                        setLessonDraft((current) => ({ ...current, notesTitle: event.target.value }))
-                                    }
-                                    placeholder="What to remember"
-                                    disabled={!selection.sectionId}
-                                />
-                            </label>
+                            {/* Removed Notes title input per UX request */}
                         </div>
 
                         <div className="space-y-3">
@@ -1101,7 +1091,6 @@ export function AdminCourseBuilder() {
                                     />
                                 </div>
                             ) : null}
-                            {selectedLesson?.notesTitle ? <h5>{selectedLesson.notesTitle}</h5> : null}
                             <p>{selectedLesson?.notes || 'Pick a lesson from the tree on the left.'}</p>
                         </article>
                     </section>
