@@ -153,7 +153,7 @@ export function AdminEnrollmentsPage() {
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
-            <section className="mx-auto w-full max-w-7xl px-4 py-6">
+            <section className="relative z-10 mx-auto w-full max-w-7xl px-4 py-6">
                 <AdminHeader profile={profile} onLogout={logout} activePage="enrollments" pendingCount={pendingEnrollments.length} />
 
                 {loading ? (

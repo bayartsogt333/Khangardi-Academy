@@ -59,6 +59,7 @@ export function CourseStudyPage() {
     const [enrollmentStatus, setEnrollmentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null)
     const [enrollments, setEnrollments] = useState<Array<{ id: string; courseId: string; userId: string; displayName?: string | null; email?: string | null }>>([])
     const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([])
+    const [copiedLink, setCopiedLink] = useState<string>('')
 
     const completedLessonIdSet = useMemo(() => new Set(completedLessonIds), [completedLessonIds])
     const openSectionIdSet = useMemo(() => new Set(openSectionIds), [openSectionIds])
@@ -247,7 +248,7 @@ export function CourseStudyPage() {
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
-            <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+            <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
                 {initialLoading ? (
                     <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
                         Loading course…
@@ -264,24 +265,6 @@ export function CourseStudyPage() {
                         {error}
                     </p>
                 ) : null}
-
-                <section className="grid gap-4 sm:grid-cols-3">
-                    <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
-                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Status</div>
-                        <div className="mt-3 text-3xl font-semibold text-white">{course?.status || 'published'}</div>
-                        <p className="mt-2 text-sm text-slate-400">Live course availability.</p>
-                    </article>
-                    <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
-                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Sections</div>
-                        <div className="mt-3 text-3xl font-semibold text-white">{tree.sections.length}</div>
-                        <p className="mt-2 text-sm text-slate-400">Content groups in this course.</p>
-                    </article>
-                    <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
-                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Lessons</div>
-                        <div className="mt-3 text-3xl font-semibold text-white">{lessonCount}</div>
-                        <p className="mt-2 text-sm text-slate-400">Total lessons available to study.</p>
-                    </article>
-                </section>
 
                 {course && !canAccess ? (
                     <section className="grid gap-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
@@ -404,12 +387,11 @@ export function CourseStudyPage() {
                             <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20">
                                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                                     <div className="space-y-3">
-                                        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                                            Selected lesson
-                                        </span>
-                                        <h2 className="text-3xl font-semibold text-white">
-                                            {selectedLesson?.title || 'Pick a lesson'}
-                                        </h2>
+                                        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now studying</span>
+                                        <h1 className="text-2xl font-semibold text-white sm:text-3xl">{course.title}</h1>
+                                        <p className="max-w-3xl text-sm leading-7 text-slate-300">
+                                            {course.description || 'Choose a lesson from the section list to start learning.'}
+                                        </p>
                                         {lessonCount > 0 ? (
                                             <div className="mt-3 w-full max-w-md">
                                                 <div className="mb-1 text-xs text-slate-400">Progress — {completionPercent}%</div>
@@ -423,6 +405,9 @@ export function CourseStudyPage() {
                                     <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                                         <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
                                             {selectedSection?.title || 'Section'}
+                                        </span>
+                                        <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
+                                            {selectedLesson?.title || 'Pick a lesson'}
                                         </span>
                                         <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
                                             {course.category || 'Category'}
@@ -450,52 +435,69 @@ export function CourseStudyPage() {
                                         No video selected yet.
                                     </div>
                                 )}
-                            </article>
+                                <div className="border-t border-slate-800/80 bg-slate-950/40 p-6">
+                                    <div>
+                                        <div className="space-y-4">
+                                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Lesson notes</span>
+                                            <h2 className="text-2xl font-semibold text-white">
+                                                {selectedLesson?.notesTitle || selectedLesson?.title || 'Pick a lesson'}
+                                            </h2>
+                                            <p className="max-w-3xl whitespace-pre-line text-sm leading-7 text-slate-300">
+                                                {selectedLesson?.notes || 'Choose a lesson from the section list to see notes and resources.'}
+                                            </p>
+                                        </div>
 
-                            <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20">
-                                <div className="space-y-3">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Notes</span>
-                                    {selectedLesson?.notesTitle ? (
-                                        <h3 className="text-lg font-semibold text-cyan-100">{selectedLesson.notesTitle}</h3>
-                                    ) : null}
-                                    <p className="max-w-3xl text-sm leading-7 text-slate-300">
-                                        {selectedLesson?.notes || 'Choose a lesson from the section list to see notes and video.'}
-                                    </p>
-                                </div>
+                                        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                                            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Resources</div>
 
-                                {selectedLesson?.resourceLinks.length ? (
-                                    <div className="mt-6 space-y-3 border-t border-slate-800 pt-5">
-                                        <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Links</div>
-                                        <ul className="space-y-2 text-sm">
-                                            {selectedLesson.resourceLinks.map((link) => (
-                                                <li key={`${link.title}-${link.url}`}>
-                                                    <a
-                                                        href={link.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="inline-flex items-center gap-2 rounded-full border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
+                                            {selectedLesson?.resourceLinks.length ? (
+                                                <ul className="mt-3 space-y-2 text-sm">
+                                                    {selectedLesson.resourceLinks.map((link) => (
+                                                        <li key={`${link.title}-${link.url}`} className="flex items-start gap-3">
+                                                            <a
+                                                                href={link.url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex flex-1 items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
+                                                            >
+                                                                <LinkGlyph />
+                                                                <span className="break-words">{link.title || link.url}</span>
+                                                            </a>
+                                                            <button
+                                                                type="button"
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        await navigator.clipboard.writeText(link.url)
+                                                                        setCopiedLink(link.url)
+                                                                        setTimeout(() => setCopiedLink(''), 1800)
+                                                                    } catch { }
+                                                                }}
+                                                                className="ml-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100"
+                                                            >
+                                                                {copiedLink === link.url ? 'Copied' : 'Copy'}
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <p className="mt-3 text-sm text-slate-400">No resource links for this lesson.</p>
+                                            )}
+
+                                            <div className="mt-4">
+                                                {!isAdmin && selectedLesson ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleToggleLessonProgress}
+                                                        className="rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
                                                     >
-                                                        <LinkGlyph />
-                                                        <span>{link.title || link.url}</span>
-                                                    </a>
-                                                </li>
-                                            ))}
-                                        </ul>
+                                                        {selectedLessonCompleted ? 'Mark incomplete' : 'Mark complete'}
+                                                    </button>
+                                                ) : null}
+                                            </div>
+                                        </div>
                                     </div>
-                                ) : null}
+                                </div>
                             </article>
-
-                            <div className="flex flex-wrap gap-3">
-                                {!isAdmin && selectedLesson ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleToggleLessonProgress}
-                                        className="rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
-                                    >
-                                        {selectedLessonCompleted ? 'Mark incomplete' : 'Mark complete'}
-                                    </button>
-                                ) : null}
-                            </div>
                         </section>
 
                         {isAdmin ? (

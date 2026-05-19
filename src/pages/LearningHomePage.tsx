@@ -45,10 +45,10 @@ export function LearningHomePage() {
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
-            <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+            <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
                 <SiteHeader profile={profile} onLogout={logout} />
 
-                <section className="grid gap-4 sm:grid-cols-3">
+                <section className="hidden gap-4 sm:grid sm:grid-cols-3">
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
                         <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Catalog</div>
                         <div className="mt-3 text-3xl font-semibold text-white">{courses.length}</div>

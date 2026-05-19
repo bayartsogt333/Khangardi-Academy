@@ -149,7 +149,7 @@ export function CommunityPage() {
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
-            <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+            <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
                 <SiteHeader profile={profile} onLogout={logout} />
 
                 <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
