@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, useEffect } from 'react'
-import { Heart, MessageCircle, Send, Trash2 } from 'lucide-react'
+import { AlertTriangle, Heart, MessageCircle, Send, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import {
     listenToPosts,
@@ -15,6 +15,13 @@ import SiteHeader from '../components/SiteHeader'
 
 export function CommunityPage() {
     const { profile, logout } = useAuth()
+    const isAdmin = useMemo(() => profile?.role === 'admin', [profile?.role])
+    const [deleteTarget, setDeleteTarget] = useState<
+        | { kind: 'post'; postId: string; title: string }
+        | { kind: 'comment'; postId: string; commentId: string; title: string }
+        | null
+    >(null)
+    const [deleting, setDeleting] = useState(false)
 
     const [posts, setPosts] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
@@ -55,8 +62,8 @@ export function CommunityPage() {
         return Array.from(m.entries()).map(([id, name]) => ({ id, name }))
     }, [posts])
 
-    const canDeletePost = (post: any) => !!profile && (profile.role === 'admin' || profile.uid === post.authorId)
-    const canDeleteComment = (c: any) => !!profile && (profile.role === 'admin' || profile.uid === c.authorId)
+    const canDeletePost = (post: any) => !!profile && (isAdmin || profile.uid === post.authorId)
+    const canDeleteComment = (c: any) => !!profile && (isAdmin || profile.uid === c.authorId)
     const isCurrentUser = useCallback((authorId: string) => !!profile?.uid && authorId === profile.uid, [profile?.uid])
 
     const isLikedByUser = useCallback(
@@ -96,21 +103,37 @@ export function CommunityPage() {
         }
     }, [profile, commentTextByPost])
 
-    const handleDeletePost = useCallback(async (postId: string) => {
-        try {
-            await deletePost(postId)
-        } catch (e) {
-            console.error(e)
-        }
+    const handleDeletePost = useCallback((post: any) => {
+        setDeleteTarget({ kind: 'post', postId: post.id, title: post.text?.slice(0, 48) || 'Post' })
     }, [])
 
-    const handleDeleteComment = useCallback(async (postId: string, commentId: string) => {
+    const handleDeleteComment = useCallback((postId: string, comment: any) => {
+        setDeleteTarget({ kind: 'comment', postId, commentId: comment.id, title: comment.text?.slice(0, 48) || 'Comment' })
+    }, [])
+
+    const closeDeleteModal = useCallback(() => {
+        if (deleting) return
+        setDeleteTarget(null)
+    }, [deleting])
+
+    const handleConfirmDelete = useCallback(async () => {
+        if (!deleteTarget) return
+
+        setDeleting(true)
+
         try {
-            await deleteComment(postId, commentId)
+            if (deleteTarget.kind === 'post') {
+                await deletePost(deleteTarget.postId)
+            } else {
+                await deleteComment(deleteTarget.postId, deleteTarget.commentId)
+            }
         } catch (e) {
             console.error(e)
+        } finally {
+            setDeleting(false)
+            setDeleteTarget(null)
         }
-    }, [])
+    }, [deleteTarget])
 
     const handleToggleCommentLike = useCallback(
         async (postId: string, comment: any) => {
@@ -205,7 +228,7 @@ export function CommunityPage() {
                                                     {canDeletePost(post) ? (
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleDeletePost(post.id)}
+                                                            onClick={() => handleDeletePost(post)}
                                                             className="rounded-full border border-slate-700/70 bg-slate-900/80 p-2 text-slate-300 transition hover:border-rose-400/40 hover:bg-rose-500/10 hover:text-rose-200"
                                                             aria-label="Delete post"
                                                         >
@@ -289,7 +312,7 @@ export function CommunityPage() {
                                                                     {canDeleteComment(c) ? (
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() => handleDeleteComment(post.id, c.id)}
+                                                                            onClick={() => handleDeleteComment(post.id, c)}
                                                                             className="rounded-full border border-slate-700/70 bg-slate-950/80 p-2 text-slate-300 transition hover:border-rose-400/40 hover:bg-rose-500/10 hover:text-rose-200"
                                                                             aria-label="Delete comment"
                                                                         >
@@ -357,9 +380,7 @@ export function CommunityPage() {
                                                     </span>
                                                 ) : null}
                                             </div>
-                                            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-emerald-300">
-                                                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                                                Active
+                                            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-emerald-300">                                                Active
                                             </div>
                                         </div>
                                     </div>
@@ -370,6 +391,46 @@ export function CommunityPage() {
                         </div>
                     </aside>
                 </section>
+
+                {deleteTarget ? (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-6 backdrop-blur-sm">
+                        <div className="w-full max-w-md rounded-[28px] border border-slate-700 bg-slate-950 p-6 shadow-2xl shadow-black/60">
+                            <div className="flex items-start gap-4">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-300">
+                                    <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-xl font-semibold text-white">Confirm delete</h3>
+                                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                                        {deleteTarget.kind === 'post'
+                                            ? `Delete this post?`
+                                            : `Delete this comment?`}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex items-center justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={closeDeleteModal}
+                                    disabled={deleting}
+                                    className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void handleConfirmDelete()}
+                                    disabled={deleting}
+                                    className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                    <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
             </section>
         </main>
     )

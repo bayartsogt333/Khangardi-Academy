@@ -251,6 +251,34 @@ export async function updateCourse(courseId: string, input: CourseEditorDraft, t
     await updateDoc(courseRef, patch)
 }
 
+export async function deleteCourse(courseId: string) {
+    const courseRef = doc(db, 'courses', courseId)
+    const courseSnapshot = await getDoc(courseRef)
+    const thumbnailPath = courseSnapshot.exists() ? (courseSnapshot.data().thumbnailPath as string | null | undefined) : null
+
+    if (thumbnailPath) {
+        await deleteObject(ref(storage, thumbnailPath)).catch(() => undefined)
+    }
+
+    const sectionsSnapshot = await getDocs(query(collection(db, 'courses', courseId, 'sections'), orderBy('order', 'asc')))
+
+    await Promise.all(
+        sectionsSnapshot.docs.map(async (sectionDoc) => {
+            const lessonsSnapshot = await getDocs(
+                query(collection(db, 'courses', courseId, 'sections', sectionDoc.id, 'lessons'), orderBy('order', 'asc')),
+            )
+
+            await Promise.all(lessonsSnapshot.docs.map((lessonDoc) => deleteDoc(lessonDoc.ref)))
+            await deleteDoc(sectionDoc.ref)
+        }),
+    )
+
+    const enrollmentsSnapshot = await getDocs(collection(db, 'courses', courseId, 'enrollments'))
+    await Promise.all(enrollmentsSnapshot.docs.map((enrollmentDoc) => deleteDoc(enrollmentDoc.ref)))
+
+    await deleteDoc(courseRef)
+}
+
 export async function addSection(courseId: string, input: SectionDraft) {
     const sectionsRef = collection(db, 'courses', courseId, 'sections')
     const nextOrder = await getNextOrder(sectionsRef)

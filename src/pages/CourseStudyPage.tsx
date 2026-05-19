@@ -11,6 +11,7 @@ import {
 import { clearLessonProgress, loadLessonProgress, markLessonComplete } from '../api/lessonProgress'
 import { useAuth } from '../context/AuthContext'
 import SiteHeader from '../components/SiteHeader'
+import { ChevronDown } from 'lucide-react'
 import type { CourseRecord, LessonRecord, SectionRecord } from '../types/course'
 
 type CourseTree = {
@@ -44,10 +45,12 @@ function CheckGlyph() {
 export function CourseStudyPage() {
     const { courseId } = useParams()
     const { logout, profile } = useAuth()
+    const isAdmin = useMemo(() => profile?.role === 'admin', [profile?.role])
     const [course, setCourse] = useState<CourseRecord | null>(null)
     const [tree, setTree] = useState<CourseTree>({ course: null, sections: [] })
     const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
     const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null)
+    const [openSectionIds, setOpenSectionIds] = useState<string[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [enrollmentSavingId, setEnrollmentSavingId] = useState('')
@@ -58,6 +61,7 @@ export function CourseStudyPage() {
     const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([])
 
     const completedLessonIdSet = useMemo(() => new Set(completedLessonIds), [completedLessonIds])
+    const openSectionIdSet = useMemo(() => new Set(openSectionIds), [openSectionIds])
     const selectedSection = useMemo(
         () => tree.sections.find((section) => section.id === selectedSectionId) ?? null,
         [selectedSectionId, tree.sections],
@@ -78,7 +82,7 @@ export function CourseStudyPage() {
         return Math.round((completedLessonIds.length / lessonCount) * 100)
     }, [completedLessonIds.length, lessonCount])
 
-    const canAccess = profile?.role === 'admin' || hasAccess
+    const canAccess = isAdmin || hasAccess
 
     const loadStudy = useCallback(async () => {
         if (!courseId) {
@@ -97,24 +101,27 @@ export function CourseStudyPage() {
             if (!nextCourse) {
                 setTree({ course: null, sections: [] })
                 setHasAccess(false)
+                setOpenSectionIds([])
                 return
             }
 
             const enrollment = profile ? await loadEnrollment(courseId, profile.uid) : null
             setEnrollmentStatus(enrollment?.status ?? null)
-            const permitted = profile?.role === 'admin' || enrollment?.status === 'approved'
+            const permitted = isAdmin || enrollment?.status === 'approved'
             setHasAccess(permitted)
 
             if (!permitted) {
                 setTree({ course: nextCourse, sections: [] })
                 setSelectedSectionId(null)
                 setSelectedLessonId(null)
+                setOpenSectionIds([])
                 return
             }
 
             const nextTree = await loadCourseTree(courseId)
             if (!nextTree) {
                 setTree({ course: nextCourse, sections: [] })
+                setOpenSectionIds([])
                 return
             }
 
@@ -124,8 +131,9 @@ export function CourseStudyPage() {
             const nextLesson = nextSection?.lessons[0] ?? null
             setSelectedSectionId(nextSection?.id ?? null)
             setSelectedLessonId(nextLesson?.id ?? null)
+            setOpenSectionIds(nextSection?.id ? [nextSection.id] : [])
 
-            if (profile?.role === 'admin') {
+            if (isAdmin) {
                 setEnrollments(await loadCourseEnrollments(courseId))
             } else if (profile) {
                 const lessonIds = nextTree.sections.flatMap((section) => section.lessons.map((lesson) => lesson.id))
@@ -140,7 +148,7 @@ export function CourseStudyPage() {
         } finally {
             setLoading(false)
         }
-    }, [courseId, profile?.role, profile?.uid])
+    }, [courseId, isAdmin, profile?.uid])
 
     useEffect(() => {
         void loadStudy()
@@ -220,6 +228,22 @@ export function CourseStudyPage() {
             setSaving(false)
         }
     }, [courseId, profile, selectedLesson, selectedLessonCompleted])
+
+    const handleToggleSection = useCallback(
+        (section: SectionRecord & { lessons: LessonRecord[] }) => {
+            const wasOpen = openSectionIdSet.has(section.id)
+
+            setOpenSectionIds((current) =>
+                current.includes(section.id) ? current.filter((id) => id !== section.id) : [...current, section.id],
+            )
+
+            if (!wasOpen) {
+                setSelectedSectionId(section.id)
+                setSelectedLessonId(section.lessons[0]?.id ?? null)
+            }
+        },
+        [openSectionIdSet],
+    )
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -320,10 +344,7 @@ export function CourseStudyPage() {
                                     <div key={section.id} className="space-y-2">
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setSelectedSectionId(section.id)
-                                                setSelectedLessonId(section.lessons[0]?.id ?? null)
-                                            }}
+                                            onClick={() => handleToggleSection(section)}
                                             className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${section.id === selectedSectionId
                                                 ? 'border-cyan-400/40 bg-cyan-400/10 text-white'
                                                 : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
@@ -335,12 +356,17 @@ export function CourseStudyPage() {
                                                     {section.description || 'Section overview'}
                                                 </div>
                                             </div>
-                                            <small className="text-xs uppercase tracking-[0.24em] text-slate-400">
-                                                {section.lessons.length} lessons
-                                            </small>
+                                            <div className="flex items-center gap-3">
+                                                <small className="text-xs uppercase tracking-[0.24em] text-slate-400">
+                                                    {section.lessons.length} lessons
+                                                </small>
+                                                <ChevronDown
+                                                    className={`h-4 w-4 text-slate-400 transition ${openSectionIdSet.has(section.id) ? 'rotate-180 text-cyan-300' : ''}`}
+                                                />
+                                            </div>
                                         </button>
 
-                                        {section.id === selectedSectionId ? (
+                                        {openSectionIdSet.has(section.id) ? (
                                             <div className="space-y-2 pl-4">
                                                 {section.lessons.map((lesson, lessonIndex) => (
                                                     <button
@@ -460,7 +486,7 @@ export function CourseStudyPage() {
                             </article>
 
                             <div className="flex flex-wrap gap-3">
-                                {profile?.role !== 'admin' && selectedLesson ? (
+                                {!isAdmin && selectedLesson ? (
                                     <button
                                         type="button"
                                         onClick={handleToggleLessonProgress}
@@ -472,7 +498,7 @@ export function CourseStudyPage() {
                             </div>
                         </section>
 
-                        {profile?.role === 'admin' ? (
+                        {isAdmin ? (
                             <aside className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-black/20 lg:col-span-2">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>

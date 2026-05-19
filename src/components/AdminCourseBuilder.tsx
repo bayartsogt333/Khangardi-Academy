@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import { AlertTriangle, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import {
     addLesson,
     addSection,
+    deleteCourse,
     deleteLesson,
     deleteSection,
     createCourse,
@@ -63,6 +65,11 @@ type DragSource =
     | { kind: 'section'; sectionId: string }
     | { kind: 'lesson'; sectionId: string; lessonId: string }
 
+type DeleteTarget =
+    | { kind: 'course'; courseId: string; title: string }
+    | { kind: 'section'; sectionId: string; title: string }
+    | { kind: 'lesson'; sectionId: string; lessonId: string; title: string }
+
 function courseToDraft(course: CourseRecord | null): CourseEditorDraft {
     if (!course) return emptyCourseDraft
 
@@ -110,6 +117,7 @@ export function AdminCourseBuilder() {
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
     const [dragSource, setDragSource] = useState<DragSource | null>(null)
+    const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
     const selectedCourse = tree.course
     const selectedSection = tree.sections.find((section) => section.id === selection.sectionId) ?? null
@@ -119,11 +127,13 @@ export function AdminCourseBuilder() {
         [tree.sections],
     )
 
-    const reloadCourses = async (preferredCourseId?: string | null) => {
+    const reloadCourses = async (preferredCourseId?: string | null, options?: { resetSelection?: boolean }) => {
         const nextCourses = await loadAdminCourses()
         setCourses(nextCourses)
 
-        if (preferredCourseId && nextCourses.some((course) => course.id === preferredCourseId)) {
+        if (options?.resetSelection) {
+            setSelection({ courseId: nextCourses[0]?.id ?? null, sectionId: null, lessonId: null })
+        } else if (preferredCourseId && nextCourses.some((course) => course.id === preferredCourseId)) {
             setSelection((current) => ({
                 ...current,
                 courseId: preferredCourseId,
@@ -299,51 +309,76 @@ export function AdminCourseBuilder() {
         }))
     }
 
-    const handleSectionDelete = async (sectionId: string) => {
-        if (!selection.courseId) return
+    const requestDeleteCourse = useCallback(() => {
+        if (!selectedCourse) return
+
+        setDeleteTarget({ kind: 'course', courseId: selectedCourse.id, title: selectedCourse.title })
+    }, [selectedCourse])
+
+    const requestDeleteSection = useCallback(() => {
+        if (!selectedSection) return
+
+        setDeleteTarget({ kind: 'section', sectionId: selectedSection.id, title: selectedSection.title })
+    }, [selectedSection])
+
+    const requestDeleteLesson = useCallback(() => {
+        if (!selectedLesson || !selection.sectionId) return
+
+        setDeleteTarget({
+            kind: 'lesson',
+            sectionId: selection.sectionId,
+            lessonId: selectedLesson.id,
+            title: selectedLesson.title,
+        })
+    }, [selectedLesson, selection.sectionId])
+
+    const closeDeleteModal = useCallback(() => {
+        if (busy) return
+        setDeleteTarget(null)
+    }, [busy])
+
+    const handleConfirmDelete = useCallback(async () => {
+        if (!deleteTarget || !selection.courseId) return
 
         setBusy(true)
         setError('')
         setMessage('')
 
         try {
-            await deleteSection(selection.courseId, sectionId)
-            setMessage('Section deleted.')
-            if (selection.sectionId === sectionId) {
-                setSelection((current) => ({ ...current, sectionId: null, lessonId: null }))
+            if (deleteTarget.kind === 'course') {
+                await deleteCourse(deleteTarget.courseId)
+                resetToNewCourse()
+                await reloadCourses(null, { resetSelection: true })
+                setMessage('Course deleted.')
+                return
             }
-            await reloadCourses(selection.courseId)
-            await reloadTree(selection.courseId)
-        } catch (deleteError) {
-            const firebaseError = deleteError as { message?: string }
-            setError(firebaseError.message || 'Failed to delete section.')
-        } finally {
-            setBusy(false)
-        }
-    }
 
-    const handleLessonDelete = async (sectionId: string, lessonId: string) => {
-        if (!selection.courseId) return
+            if (deleteTarget.kind === 'section') {
+                await deleteSection(selection.courseId, deleteTarget.sectionId)
+                if (selection.sectionId === deleteTarget.sectionId) {
+                    setSelection((current) => ({ ...current, sectionId: null, lessonId: null }))
+                }
+                setMessage('Section deleted.')
+                await reloadCourses(selection.courseId)
+                await reloadTree(selection.courseId)
+                return
+            }
 
-        setBusy(true)
-        setError('')
-        setMessage('')
-
-        try {
-            await deleteLesson(selection.courseId, sectionId, lessonId)
-            setMessage('Lesson deleted.')
-            if (selection.lessonId === lessonId) {
+            await deleteLesson(selection.courseId, deleteTarget.sectionId, deleteTarget.lessonId)
+            if (selection.lessonId === deleteTarget.lessonId) {
                 setSelection((current) => ({ ...current, lessonId: null }))
             }
+            setMessage('Lesson deleted.')
             await reloadCourses(selection.courseId)
             await reloadTree(selection.courseId)
         } catch (deleteError) {
             const firebaseError = deleteError as { message?: string }
-            setError(firebaseError.message || 'Failed to delete lesson.')
+            setError(firebaseError.message || 'Failed to delete item.')
         } finally {
             setBusy(false)
+            setDeleteTarget(null)
         }
-    }
+    }, [deleteTarget, reloadCourses, reloadTree, selection.courseId, selection.lessonId, selection.sectionId])
 
     const handleSectionDragStart = (sectionId: string) => {
         setDragSource({ kind: 'section', sectionId })
@@ -521,6 +556,48 @@ export function AdminCourseBuilder() {
         <section className="admin-course-builder">
             <header className="admin-course-builder__hero">
                 <div>
+
+                    {deleteTarget ? (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-6 backdrop-blur-sm">
+                            <div className="w-full max-w-md rounded-[28px] border border-slate-700 bg-slate-950 p-6 shadow-2xl shadow-black/60">
+                                <div className="flex items-start gap-4">
+                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-300">
+                                        <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h3 className="text-xl font-semibold text-white">Confirm delete</h3>
+                                        <p className="mt-2 text-sm leading-6 text-slate-300">
+                                            {deleteTarget.kind === 'course'
+                                                ? `Delete the course “${deleteTarget.title}” and all of its sections, lessons, enrollments, and progress?`
+                                                : deleteTarget.kind === 'section'
+                                                    ? `Delete the section “${deleteTarget.title}” and all lessons inside it?`
+                                                    : `Delete the lesson “${deleteTarget.title}”?`}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex items-center justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={closeDeleteModal}
+                                        disabled={busy}
+                                        className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => void handleConfirmDelete()}
+                                        disabled={busy}
+                                        className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                        <span>{busy ? 'Deleting...' : 'Delete'}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : null}
                     <span className="eyebrow">Admin course studio</span>
                     <h2>Courses, sections, and lessons are now Firebase-backed.</h2>
                     <p>
@@ -613,18 +690,6 @@ export function AdminCourseBuilder() {
                                         <span>{section.title}</span>
                                         <small>{section.lessons.length} lessons</small>
                                     </button>
-
-                                    <div className="tree-actions">
-                                        <button
-                                            type="button"
-                                            className="icon-button danger"
-                                            aria-label="Delete section"
-                                            title="Delete section"
-                                            onClick={() => handleSectionDelete(section.id)}
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
                                 </div>
 
                                 <div className="tree-children">
@@ -652,18 +717,6 @@ export function AdminCourseBuilder() {
                                                 <span>{lesson.title}</span>
                                                 <small>{lesson.order}. lesson</small>
                                             </button>
-
-                                            <div className="tree-actions">
-                                                <button
-                                                    type="button"
-                                                    className="icon-button danger"
-                                                    aria-label="Delete lesson"
-                                                    title="Delete lesson"
-                                                    onClick={() => handleLessonDelete(section.id, lesson.id)}
-                                                >
-                                                    ×
-                                                </button>
-                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -680,9 +733,22 @@ export function AdminCourseBuilder() {
                                 <span className="card-kicker">Course details</span>
                                 <h3>{selection.courseId ? 'Edit selected course' : 'Create a new course'}</h3>
                             </div>
-                            <button type="submit" className="primary-button" disabled={busy}>
-                                {busy ? 'Saving...' : selection.courseId ? 'Save course' : 'Create course'}
-                            </button>
+                            <div className="flex items-center gap-3">
+                                {selectedCourse ? (
+                                    <button
+                                        type="button"
+                                        onClick={requestDeleteCourse}
+                                        disabled={busy}
+                                        className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                        <span>Delete course</span>
+                                    </button>
+                                ) : null}
+                                <button type="submit" className="primary-button" disabled={busy}>
+                                    {busy ? 'Saving...' : selection.courseId ? 'Save course' : 'Create course'}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-grid">
@@ -777,9 +843,22 @@ export function AdminCourseBuilder() {
                                 <span className="card-kicker">Section</span>
                                 <h3>{selectedSection ? 'Edit selected section' : 'Add section to selected course'}</h3>
                             </div>
-                            <button type="submit" className="primary-button" disabled={!selection.courseId || busy}>
-                                {busy ? 'Saving...' : selectedSection ? 'Save section' : 'Add section'}
-                            </button>
+                            <div className="flex items-center gap-3">
+                                {selectedSection ? (
+                                    <button
+                                        type="button"
+                                        onClick={requestDeleteSection}
+                                        disabled={busy}
+                                        className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                        <span>Delete section</span>
+                                    </button>
+                                ) : null}
+                                <button type="submit" className="primary-button" disabled={!selection.courseId || busy}>
+                                    {busy ? 'Saving...' : selectedSection ? 'Save section' : 'Add section'}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-grid">
@@ -815,13 +894,26 @@ export function AdminCourseBuilder() {
                                 <span className="card-kicker">Lesson</span>
                                 <h3>{selectedLesson ? 'Edit selected lesson' : 'Add lesson to selected section'}</h3>
                             </div>
-                            <button
-                                type="submit"
-                                className="primary-button"
-                                disabled={!selection.courseId || !selection.sectionId || busy}
-                            >
-                                {busy ? 'Saving...' : selectedLesson ? 'Save lesson' : 'Add lesson'}
-                            </button>
+                            <div className="flex items-center gap-3">
+                                {selectedLesson ? (
+                                    <button
+                                        type="button"
+                                        onClick={requestDeleteLesson}
+                                        disabled={busy}
+                                        className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                        <span>Delete lesson</span>
+                                    </button>
+                                ) : null}
+                                <button
+                                    type="submit"
+                                    className="primary-button"
+                                    disabled={!selection.courseId || !selection.sectionId || busy}
+                                >
+                                    {busy ? 'Saving...' : selectedLesson ? 'Save lesson' : 'Add lesson'}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-grid">
