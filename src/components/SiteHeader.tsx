@@ -202,7 +202,6 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                             className={`ml-2 inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
                         >
                             <Snowflake className={`h-4 w-4 ${snowfallEnabled ? 'animate-pulse text-cyan-200' : 'text-slate-400'}`} />
-                            <span>Winter mode</span>
                         </button>
                     </div>
                 </div>

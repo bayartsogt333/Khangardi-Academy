@@ -30,28 +30,10 @@ function enrollmentRef(courseId: string, userId: string) {
     return doc(db, 'courses', courseId, 'enrollments', userId)
 }
 
-async function loadCourseLessonIds(courseId: string) {
-    const sectionsSnapshot = await getDocs(collection(db, 'courses', courseId, 'sections'))
-    const lessonIdsBySection = await Promise.all(
-        sectionsSnapshot.docs.map(async (sectionDoc) => {
-            const lessonsSnapshot = await getDocs(collection(db, 'courses', courseId, 'sections', sectionDoc.id, 'lessons'))
-            return lessonsSnapshot.docs.map((lessonDoc) => lessonDoc.id)
-        }),
-    )
-
-    return lessonIdsBySection.flat()
-}
-
 async function deleteUserLessonProgress(courseId: string, userId: string) {
-    const lessonIds = await loadCourseLessonIds(courseId)
-
-    if (!lessonIds.length) {
-        return
-    }
-
-    await Promise.all(
-        lessonIds.map((lessonId) => deleteDoc(doc(db, 'courses', courseId, 'lessonProgress', userId, 'lessons', lessonId))),
-    )
+    const lessonsRef = collection(db, 'courses', courseId, 'lessonProgress', userId, 'lessons')
+    const progressSnapshot = await getDocs(lessonsRef)
+    await Promise.all(progressSnapshot.docs.map((progressDoc) => deleteDoc(progressDoc.ref)))
 }
 
 export async function loadEnrollment(courseId: string, userId: string): Promise<EnrollmentRecord | null> {

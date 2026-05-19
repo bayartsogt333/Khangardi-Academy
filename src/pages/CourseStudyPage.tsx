@@ -63,14 +63,32 @@ export function CourseStudyPage() {
 
     const completedLessonIdSet = useMemo(() => new Set(completedLessonIds), [completedLessonIds])
     const openSectionIdSet = useMemo(() => new Set(openSectionIds), [openSectionIds])
-    const selectedSection = useMemo(
-        () => tree.sections.find((section) => section.id === selectedSectionId) ?? null,
-        [selectedSectionId, tree.sections],
-    )
-    const selectedLesson = useMemo(
-        () => selectedSection?.lessons.find((lesson) => lesson.id === selectedLessonId) ?? null,
-        [selectedLessonId, selectedSection],
-    )
+    const selectedLessonLocation = useMemo(() => {
+        if (!selectedLessonId) return null
+
+        for (const section of tree.sections) {
+            const lesson = section.lessons.find((item) => item.id === selectedLessonId)
+            if (lesson) {
+                return { section, lesson }
+            }
+        }
+
+        return null
+    }, [selectedLessonId, tree.sections])
+    const selectedSection = useMemo(() => {
+        if (selectedSectionId) {
+            return tree.sections.find((section) => section.id === selectedSectionId) ?? selectedLessonLocation?.section ?? null
+        }
+
+        return selectedLessonLocation?.section ?? tree.sections[0] ?? null
+    }, [selectedLessonLocation, selectedSectionId, tree.sections])
+    const selectedLesson = useMemo(() => {
+        if (selectedLessonLocation) {
+            return selectedLessonLocation.lesson
+        }
+
+        return selectedSection?.lessons[0] ?? null
+    }, [selectedLessonLocation, selectedSection])
     const selectedLessonCompleted = selectedLesson ? completedLessonIdSet.has(selectedLesson.id) : false
     const lessonCount = useMemo(
         () => tree.sections.reduce((total, section) => total + section.lessons.length, 0),
@@ -234,13 +252,21 @@ export function CourseStudyPage() {
         (section: SectionRecord & { lessons: LessonRecord[] }) => {
             const wasOpen = openSectionIdSet.has(section.id)
 
+            setSelectedSectionId(section.id)
+            setSelectedLessonId((current) => {
+                if (current && section.lessons.some((lesson) => lesson.id === current)) {
+                    return current
+                }
+
+                return section.lessons[0]?.id ?? null
+            })
+
             setOpenSectionIds((current) =>
                 current.includes(section.id) ? current.filter((id) => id !== section.id) : [...current, section.id],
             )
 
             if (!wasOpen) {
-                setSelectedSectionId(section.id)
-                setSelectedLessonId(section.lessons[0]?.id ?? null)
+                return
             }
         },
         [openSectionIdSet],
@@ -355,7 +381,10 @@ export function CourseStudyPage() {
                                                     <button
                                                         key={lesson.id}
                                                         type="button"
-                                                        onClick={() => setSelectedLessonId(lesson.id)}
+                                                        onClick={() => {
+                                                            setSelectedSectionId(section.id)
+                                                            setSelectedLessonId(lesson.id)
+                                                        }}
                                                         className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${lesson.id === selectedLessonId
                                                             ? 'border-indigo-400/40 bg-indigo-400/10 text-white'
                                                             : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
