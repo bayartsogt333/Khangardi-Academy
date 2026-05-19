@@ -9,6 +9,16 @@ import { CommunityPage } from './pages/CommunityPage'
 import { UserHomePage } from './pages/UserHomePage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+    const { profile } = useAuth()
+
+    if (profile?.role !== 'admin') {
+        return <Navigate to="/home" replace />
+    }
+
+    return children
+}
+
 function AppContent() {
     const { loading, profile } = useAuth()
 
@@ -35,8 +45,22 @@ function AppContent() {
                     path="/"
                     element={<Navigate to={profile.role === 'admin' ? '/admin' : '/home'} replace />}
                 />
-                <Route path="/admin" element={<Dashboard />} />
-                <Route path="/admin/enrollments" element={<AdminEnrollmentsPage />} />
+                <Route
+                    path="/admin"
+                    element={
+                        <RequireAdmin>
+                            <Dashboard />
+                        </RequireAdmin>
+                    }
+                />
+                <Route
+                    path="/admin/enrollments"
+                    element={
+                        <RequireAdmin>
+                            <AdminEnrollmentsPage />
+                        </RequireAdmin>
+                    }
+                />
                 <Route path="/home" element={<UserHomePage />} />
                 <Route path="/classroom" element={<LearningHomePage />} />
                 <Route path="/learn" element={<LearningHomePage />} />
