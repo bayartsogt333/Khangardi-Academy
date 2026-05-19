@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate /*, useLocation */ } from 'react-router-dom'
 import { loadPublishedCourses } from '../api/courses'
 import { useAuth } from '../context/AuthContext'
 import type { CourseRecord } from '../types/course'
+import SiteHeader from '../components/SiteHeader'
+import { BookOpen, CheckCircle2 } from 'lucide-react'
 
 export function LearningHomePage() {
     const { logout, profile } = useAuth()
     const navigate = useNavigate()
+    // const location = useLocation()
+    // const pathname = location.pathname
+    // const isClassroom = pathname.startsWith('/class') || pathname.startsWith('/learn')
     const [courses, setCourses] = useState<CourseRecord[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -41,51 +46,7 @@ export function LearningHomePage() {
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-                <header className="rounded-3xl border border-slate-800/80 bg-slate-900/80 p-5 shadow-2xl shadow-black/30 backdrop-blur xl:p-6">
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="space-y-2">
-                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                                Learning space
-                            </span>
-                            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                                Choose a course and start learning
-                            </h1>
-                            <p className="max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                                Only published courses are visible here. Open a course to study its sections and lessons.
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:flex-row sm:items-center">
-                            {profile?.role === 'admin' ? (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setOpenCourseId('/admin')
-                                        navigate('/admin')
-                                    }}
-                                    className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
-                                >
-                                    <span className="inline-flex items-center gap-2">
-                                        {openCourseId === '/admin' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
-                                        <span>Admin studio</span>
-                                    </span>
-                                </button>
-                            ) : null}
-
-                            <div className="rounded-2xl bg-slate-900 px-4 py-3">
-                                <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Member</div>
-                                <div className="text-sm font-medium text-white">{profile?.displayName}</div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={logout}
-                                className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
-                            >
-                                Logout
-                            </button>
-                        </div>
-                    </div>
-                </header>
+                <SiteHeader profile={profile} onLogout={logout} />
 
                 <section className="grid gap-4 sm:grid-cols-3">
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
@@ -95,13 +56,22 @@ export function LearningHomePage() {
                     </article>
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
                         <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Profile</div>
-                        <div className="mt-3 text-3xl font-semibold text-white">{profile?.role}</div>
+                        <div className="mt-3 flex items-center gap-3 text-3xl font-semibold text-white">
+                            <span>{profile?.role}</span>
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(74,222,128,0.15)]" />
+                                Active
+                            </span>
+                        </div>
                         <p className="mt-2 text-sm text-slate-400">Your current access level.</p>
                     </article>
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
                         <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Access</div>
-                        <div className="mt-3 text-3xl font-semibold text-white">Enrollment</div>
-                        <p className="mt-2 text-sm text-slate-400">Open a course page to request or continue access.</p>
+                        <div className="mt-3 flex items-center gap-2 text-3xl font-semibold text-white">
+                            <BookOpen className="h-7 w-7 text-cyan-300" />
+                            <span>Study</span>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-400">Continue a course page to request or keep studying.</p>
                     </article>
                 </section>
 
@@ -172,7 +142,8 @@ export function LearningHomePage() {
                                     <div className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300">
                                         <span className="inline-flex items-center gap-2">
                                             {openCourseId === course.id ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
-                                            <span>Open course</span>
+                                            <CheckCircle2 className="h-4 w-4" />
+                                            <span>Continue course</span>
                                         </span>
                                     </div>
                                 </div>

@@ -40,15 +40,14 @@ export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }:
                     <button
                         type="button"
                         onClick={() => {
-                            if (activePage === 'studio') return
-                            setBusyTarget('/learn')
-                            navigate('/learn')
+                            setBusyTarget('/classroom')
+                            navigate('/classroom')
                         }}
-                        disabled={activePage === 'studio' || (busyTarget !== null && busyTarget !== '/learn')}
+                        disabled={(busyTarget !== null && busyTarget !== '/classroom')}
                         className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
                     >
                         <span className="inline-flex items-center gap-2">
-                            {busyTarget === '/learn' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
+                            {busyTarget === '/classroom' ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
                             <span>Learning space</span>
                         </span>
                     </button>

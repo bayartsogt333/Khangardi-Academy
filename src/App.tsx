@@ -5,6 +5,8 @@ import { Dashboard } from './components/Dashboard'
 import { LearningHomePage } from './pages/LearningHomePage'
 import { CourseStudyPage } from './pages/CourseStudyPage'
 import { AdminEnrollmentsPage } from './pages/AdminEnrollmentsPage'
+import { CommunityPage } from './pages/CommunityPage'
+import { UserHomePage } from './pages/UserHomePage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 function AppContent() {
@@ -31,13 +33,16 @@ function AppContent() {
             <Routes>
                 <Route
                     path="/"
-                    element={<Navigate to={profile.role === 'admin' ? '/admin' : '/learn'} replace />}
+                    element={<Navigate to={profile.role === 'admin' ? '/admin' : '/home'} replace />}
                 />
                 <Route path="/admin" element={<Dashboard />} />
                 <Route path="/admin/enrollments" element={<AdminEnrollmentsPage />} />
+                <Route path="/home" element={<UserHomePage />} />
+                <Route path="/classroom" element={<LearningHomePage />} />
                 <Route path="/learn" element={<LearningHomePage />} />
+                <Route path="/community" element={<CommunityPage />} />
                 <Route path="/learn/:courseId" element={<CourseStudyPage />} />
-                <Route path="*" element={<Navigate to={profile.role === 'admin' ? '/admin' : '/learn'} replace />} />
+                <Route path="*" element={<Navigate to={profile.role === 'admin' ? '/admin' : '/home'} replace />} />
             </Routes>
         </BrowserRouter>
     )

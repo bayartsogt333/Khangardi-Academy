@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { loadCourseById, loadCourseTree } from '../api/courses'
 import {
     cancelEnrollmentRequest,
@@ -10,6 +10,7 @@ import {
 } from '../api/enrollments'
 import { clearLessonProgress, loadLessonProgress, markLessonComplete } from '../api/lessonProgress'
 import { useAuth } from '../context/AuthContext'
+import SiteHeader from '../components/SiteHeader'
 import type { CourseRecord, LessonRecord, SectionRecord } from '../types/course'
 
 type CourseTree = {
@@ -232,46 +233,7 @@ export function CourseStudyPage() {
                         Loading course content…
                     </div>
                 ) : null}
-                <header className="rounded-3xl border border-slate-800/80 bg-slate-900/80 p-5 shadow-2xl shadow-black/30 backdrop-blur xl:p-6">
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="space-y-2">
-                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                                Course study
-                            </span>
-                            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                                {course?.title || 'Course not found'}
-                            </h1>
-                            <p className="max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                                {course?.description || 'This course is not available right now.'}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:flex-row sm:items-center">
-                            {profile?.role === 'admin' ? (
-                                <Link
-                                    to="/admin"
-                                    className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
-                                >
-                                    Admin studio
-                                </Link>
-                            ) : null}
-
-                            <Link
-                                to="/learn"
-                                className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
-                            >
-                                Back to catalog
-                            </Link>
-                            <button
-                                type="button"
-                                onClick={logout}
-                                className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
-                            >
-                                Logout
-                            </button>
-                        </div>
-                    </div>
-                </header>
+                <SiteHeader profile={profile} onLogout={logout} />
 
                 {error ? (
                     <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">

@@ -42,6 +42,59 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
     }
 
+    // Community collection used by the app: /community/posts/items/{postId}
+    match /community/posts/items/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 2000;
+
+      // Allow updates if author/admin, or allow authenticated users to only toggle likes (add/remove their uid)
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.authorId || isAdmin() || (
+          // only 'likes' and 'updatedAt' may be changed by non-authors
+          request.resource.data.keys().hasOnly(['likes','updatedAt','authorId','authorName','text','createdAt'])
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.authorName == resource.data.authorName
+          && request.resource.data.text == resource.data.text
+          && request.resource.data.createdAt == resource.data.createdAt
+          // ensure likes change is either addition or removal of the current user's id
+          && (
+            (request.resource.data.likes.hasAll(resource.data.likes) && request.resource.data.likes.size() == resource.data.likes.size() + 1 && request.resource.data.likes.hasAny([request.auth.uid]))
+            || (resource.data.likes.hasAll(request.resource.data.likes) && resource.data.likes.size() == request.resource.data.likes.size() + 1 && resource.data.likes.hasAny([request.auth.uid]))
+          )
+        )
+      );
+
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.authorId || isAdmin());
+
+      // Comments nested under a post
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth != null
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 1000;
+
+        allow update: if request.auth != null && (
+          request.auth.uid == resource.data.authorId || isAdmin() || (
+            request.resource.data.keys().hasOnly(['likes','updatedAt','authorId','authorName','text','createdAt'])
+            && request.resource.data.authorId == resource.data.authorId
+            && request.resource.data.authorName == resource.data.authorName
+            && request.resource.data.text == resource.data.text
+            && request.resource.data.createdAt == resource.data.createdAt
+            && (
+              (request.resource.data.likes.hasAll(resource.data.likes) && request.resource.data.likes.size() == resource.data.likes.size() + 1 && request.resource.data.likes.hasAny([request.auth.uid]))
+              || (resource.data.likes.hasAll(request.resource.data.likes) && resource.data.likes.size() == request.resource.data.likes.size() + 1 && resource.data.likes.hasAny([request.auth.uid]))
+            )
+          )
+        );
+
+        allow delete: if request.auth != null && (request.auth.uid == resource.data.authorId || isAdmin());
+      }
+    }
+
     // Classrooms: allow read for authenticated users; creation requires auth; admin-only updates/deletes.
     match /classrooms/{classId} {
       allow read: if request.auth != null;
