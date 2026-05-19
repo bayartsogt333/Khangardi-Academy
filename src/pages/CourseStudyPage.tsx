@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { loadCourseById, loadCourseTree } from '../api/courses'
 import {
@@ -56,9 +56,16 @@ export function CourseStudyPage() {
     const [enrollments, setEnrollments] = useState<Array<{ id: string; courseId: string; userId: string; displayName?: string | null; email?: string | null }>>([])
     const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([])
 
-    const selectedSection = tree.sections.find((section) => section.id === selectedSectionId) ?? null
-    const selectedLesson = selectedSection?.lessons.find((lesson) => lesson.id === selectedLessonId) ?? null
-    const selectedLessonCompleted = selectedLesson ? completedLessonIds.includes(selectedLesson.id) : false
+    const completedLessonIdSet = useMemo(() => new Set(completedLessonIds), [completedLessonIds])
+    const selectedSection = useMemo(
+        () => tree.sections.find((section) => section.id === selectedSectionId) ?? null,
+        [selectedSectionId, tree.sections],
+    )
+    const selectedLesson = useMemo(
+        () => selectedSection?.lessons.find((lesson) => lesson.id === selectedLessonId) ?? null,
+        [selectedLessonId, selectedSection],
+    )
+    const selectedLessonCompleted = selectedLesson ? completedLessonIdSet.has(selectedLesson.id) : false
     const lessonCount = useMemo(
         () => tree.sections.reduce((total, section) => total + section.lessons.length, 0),
         [tree.sections],
@@ -72,7 +79,7 @@ export function CourseStudyPage() {
 
     const canAccess = profile?.role === 'admin' || hasAccess
 
-    const loadStudy = async () => {
+    const loadStudy = useCallback(async () => {
         if (!courseId) {
             setError('Missing course id.')
             setLoading(false)
@@ -132,14 +139,13 @@ export function CourseStudyPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [courseId, profile?.role, profile?.uid])
 
     useEffect(() => {
         void loadStudy()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [courseId, profile?.uid])
+    }, [loadStudy])
 
-    const handleRequestAccess = async () => {
+    const handleRequestAccess = useCallback(async () => {
         if (!profile || !courseId) return
 
         setSaving(true)
@@ -154,9 +160,9 @@ export function CourseStudyPage() {
         } finally {
             setSaving(false)
         }
-    }
+    }, [courseId, loadStudy, profile])
 
-    const handleCancelRequest = async () => {
+    const handleCancelRequest = useCallback(async () => {
         if (!profile || !courseId) return
 
         setSaving(true)
@@ -173,9 +179,9 @@ export function CourseStudyPage() {
         } finally {
             setSaving(false)
         }
-    }
+    }, [courseId, loadStudy, profile])
 
-    const handleRemoveEnrollment = async (userId: string) => {
+    const handleRemoveEnrollment = useCallback(async (userId: string) => {
         if (!courseId || !window.confirm('Remove this enrollment?')) return
 
         setEnrollmentSavingId(userId)
@@ -190,9 +196,9 @@ export function CourseStudyPage() {
         } finally {
             setEnrollmentSavingId('')
         }
-    }
+    }, [courseId])
 
-    const handleToggleLessonProgress = async () => {
+    const handleToggleLessonProgress = useCallback(async () => {
         if (!courseId || !profile || !selectedLesson) return
 
         setSaving(true)
@@ -212,7 +218,7 @@ export function CourseStudyPage() {
         } finally {
             setSaving(false)
         }
-    }
+    }, [courseId, profile, selectedLesson, selectedLessonCompleted])
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -389,7 +395,7 @@ export function CourseStudyPage() {
                                                             <span className="font-medium text-white">{lesson.title}</span>
                                                         </div>
                                                         <small className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                                                            {completedLessonIds.includes(lesson.id) ? (
+                                                            {completedLessonIdSet.has(lesson.id) ? (
                                                                 <span className="inline-flex items-center gap-2 text-emerald-300" aria-label="Completed" title="Completed">
                                                                     <CheckGlyph />
                                                                 </span>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { loadCourseTree, loadPublishedCourses } from '../api/courses'
 import type { CourseRecord, LessonRecord, SectionRecord } from '../types/course'
 
@@ -32,9 +32,15 @@ export function StudentCourseViewer() {
     const [selectedCourseLoadingId, setSelectedCourseLoadingId] = useState<string | null>(null)
     const [error, setError] = useState('')
 
-    const selectedCourse = tree.course
-    const selectedSection = tree.sections.find((section) => section.id === selectedSectionId) ?? null
-    const selectedLesson = selectedSection?.lessons.find((lesson) => lesson.id === selectedLessonId) ?? null
+    const selectedCourse = useMemo(() => tree.course, [tree.course])
+    const selectedSection = useMemo(
+        () => tree.sections.find((section) => section.id === selectedSectionId) ?? null,
+        [selectedSectionId, tree.sections],
+    )
+    const selectedLesson = useMemo(
+        () => selectedSection?.lessons.find((lesson) => lesson.id === selectedLessonId) ?? null,
+        [selectedLessonId, selectedSection],
+    )
 
     const lessonCount = useMemo(
         () => tree.sections.reduce((total, section) => total + section.lessons.length, 0),
@@ -42,7 +48,7 @@ export function StudentCourseViewer() {
     )
     const initialLoading = loading && !courses.length && !tree.course
 
-    const loadViewer = async (preferredCourseId?: string | null, options?: { reloadCourses?: boolean; showLoading?: boolean }) => {
+    const loadViewer = useCallback(async (preferredCourseId?: string | null, options?: { reloadCourses?: boolean; showLoading?: boolean }) => {
         const { reloadCourses = true, showLoading = true } = options ?? {}
 
         if (showLoading) {
@@ -109,29 +115,29 @@ export function StudentCourseViewer() {
             }
             setSelectedCourseLoadingId(null)
         }
-    }
+    }, [courses])
 
     useEffect(() => {
         void loadViewer(undefined, { reloadCourses: true, showLoading: true })
-    }, [])
+    }, [loadViewer])
 
-    const handleCourseSelect = (courseId: string) => {
+    const handleCourseSelect = useCallback((courseId: string) => {
         setSelectedCourseId(courseId)
         setSelectedSectionId(null)
         setSelectedLessonId(null)
         setSelectedCourseLoadingId(courseId)
         void loadViewer(courseId, { reloadCourses: false, showLoading: false })
-    }
+    }, [loadViewer])
 
-    const handleSectionSelect = (sectionId: string) => {
+    const handleSectionSelect = useCallback((sectionId: string) => {
         const section = tree.sections.find((item) => item.id === sectionId)
         setSelectedSectionId(sectionId)
         setSelectedLessonId(section?.lessons[0]?.id ?? null)
-    }
+    }, [tree.sections])
 
-    const handleLessonSelect = (lessonId: string) => {
+    const handleLessonSelect = useCallback((lessonId: string) => {
         setSelectedLessonId(lessonId)
-    }
+    }, [])
 
     if (initialLoading) {
         return (

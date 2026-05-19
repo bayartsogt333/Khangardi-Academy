@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { approveEnrollment, loadCourseEnrollments, rejectEnrollment, removeEnrollment } from '../api/enrollments'
 import { loadAllUsers } from '../api/users'
 import { loadAdminCourses } from '../api/courses'
@@ -19,7 +19,7 @@ export function AdminEnrollmentsPage() {
     const [error, setError] = useState('')
     const [view, setView] = useState<'pending' | 'all'>('pending')
 
-    const refresh = async () => {
+    const refresh = useCallback(async () => {
         setLoading(true)
         setError('')
 
@@ -38,7 +38,7 @@ export function AdminEnrollmentsPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
     useEffect(() => {
         void refresh()
@@ -80,6 +80,16 @@ export function AdminEnrollmentsPage() {
     }, [])
 
     // Map userId -> array of enrollments (across courses)
+    const pendingEnrollments = useMemo(() => enrollments.filter((item) => item.status === 'pending'), [enrollments])
+
+    const coursesById = useMemo(() => {
+        const map = new Map<string, CourseRecord>()
+        for (const course of courses) {
+            map.set(course.id, course)
+        }
+        return map
+    }, [courses])
+
     const enrollmentByUser = useMemo(() => {
         const map = new Map<string, EnrollmentRecord[]>()
         for (const e of enrollments) {
@@ -90,7 +100,7 @@ export function AdminEnrollmentsPage() {
         return map
     }, [enrollments])
 
-    const handleApprove = async (courseIdParam: string, userId: string) => {
+    const handleApprove = useCallback(async (courseIdParam: string, userId: string) => {
         if (!courseIdParam) return
 
         setBusyId(`${courseIdParam}:${userId}`)
@@ -105,9 +115,9 @@ export function AdminEnrollmentsPage() {
         } finally {
             setBusyId('')
         }
-    }
+    }, [refresh])
 
-    const handleReject = async (courseIdParam: string, userId: string) => {
+    const handleReject = useCallback(async (courseIdParam: string, userId: string) => {
         if (!courseIdParam) return
 
         setBusyId(`${courseIdParam}:${userId}`)
@@ -122,9 +132,9 @@ export function AdminEnrollmentsPage() {
         } finally {
             setBusyId('')
         }
-    }
+    }, [refresh])
 
-    const handleRevoke = async (courseIdParam: string, userId: string) => {
+    const handleRevoke = useCallback(async (courseIdParam: string, userId: string) => {
         if (!courseIdParam) return
 
         setBusyId(`${courseIdParam}:${userId}`)
@@ -139,12 +149,12 @@ export function AdminEnrollmentsPage() {
         } finally {
             setBusyId('')
         }
-    }
+    }, [refresh])
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="mx-auto w-full max-w-7xl px-4 py-6">
-                <AdminHeader profile={profile} onLogout={logout} activePage="enrollments" pendingCount={enrollments.filter((item) => item.status === 'pending').length} />
+                <AdminHeader profile={profile} onLogout={logout} activePage="enrollments" pendingCount={pendingEnrollments.length} />
 
                 {loading ? (
                     <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
@@ -176,32 +186,30 @@ export function AdminEnrollmentsPage() {
                     {view === 'pending' ? (
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold text-white">Pending requests</h2>
-                            {enrollments.filter((e) => e.status === 'pending').length ? (
+                            {pendingEnrollments.length ? (
                                 <ul className="space-y-3">
-                                    {enrollments
-                                        .filter((e) => e.status === 'pending')
-                                        .map((item) => (
-                                            <li key={`${item.courseId}:${item.userId}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/10 transition hover:border-slate-700">
-                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                    <div className="min-w-0">
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <span className="text-sm font-semibold text-white">{item.displayName || item.email || item.userId}</span>
-                                                            <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.24em] text-cyan-200">
-                                                                Pending
-                                                            </span>
-                                                        </div>
-                                                        <div className="mt-1 text-sm text-slate-400">
-                                                            requested access to <span className="text-slate-200">{courses.find(c => c.id === item.courseId)?.title || item.courseId}</span>
-                                                        </div>
+                                    {pendingEnrollments.map((item) => (
+                                        <li key={`${item.courseId}:${item.userId}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/10 transition hover:border-slate-700">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <div className="min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="text-sm font-semibold text-white">{item.displayName || item.email || item.userId}</span>
+                                                        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.24em] text-cyan-200">
+                                                            Pending
+                                                        </span>
                                                     </div>
-
-                                                    <div className="flex gap-2 self-start sm:self-center">
-                                                        <button onClick={() => handleApprove(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400 px-3 py-1 text-xs font-semibold text-slate-950">{busyId === `${item.courseId}:${item.userId}` ? '…' : 'Approve'}</button>
-                                                        <button onClick={() => handleReject(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100">Reject</button>
+                                                    <div className="mt-1 text-sm text-slate-400">
+                                                        requested access to <span className="text-slate-200">{coursesById.get(item.courseId)?.title || item.courseId}</span>
                                                     </div>
                                                 </div>
-                                            </li>
-                                        ))}
+
+                                                <div className="flex gap-2 self-start sm:self-center">
+                                                    <button onClick={() => handleApprove(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400 px-3 py-1 text-xs font-semibold text-slate-950">{busyId === `${item.courseId}:${item.userId}` ? '…' : 'Approve'}</button>
+                                                    <button onClick={() => handleReject(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100">Reject</button>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    ))}
                                 </ul>
                             ) : (
                                 <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-400">No pending requests.</p>
