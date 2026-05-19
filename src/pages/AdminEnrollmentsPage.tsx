@@ -81,6 +81,8 @@ export function AdminEnrollmentsPage() {
 
     // Map userId -> array of enrollments (across courses)
     const pendingEnrollments = useMemo(() => enrollments.filter((item) => item.status === 'pending'), [enrollments])
+    const approvedEnrollments = useMemo(() => enrollments.filter((item) => item.status === 'approved'), [enrollments])
+    const rejectedEnrollments = useMemo(() => enrollments.filter((item) => item.status === 'rejected'), [enrollments])
 
     const coursesById = useMemo(() => {
         const map = new Map<string, CourseRecord>()
@@ -162,35 +164,63 @@ export function AdminEnrollmentsPage() {
                     </div>
                 ) : null}
 
-                <div className="mt-4 flex items-center justify-between rounded-3xl border border-slate-800/80 bg-slate-900/80 p-4">
-                    <div>
-                        <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Enrollment admin</div>
-                        <h2 className="mt-1 text-xl font-semibold text-white">Manage access and requests</h2>
-                        <p className="mt-1 text-sm text-slate-400">Default view shows pending requests; switch to all users to grant access directly.</p>
+                <div className="mt-4 rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900/90 to-slate-950/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="max-w-2xl">
+                            <div className="inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/8 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                                Enrollment admin
+                            </div>
+                            <h2 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">Manage access and requests</h2>
+                            <p className="mt-2 text-sm leading-7 text-slate-400">
+                                Pending requests stay front and center. Switch to all users when you need to grant or revoke access directly.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-2">
+                            <button
+                                type="button"
+                                onClick={() => setView('pending')}
+                                className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${view === 'pending' ? 'bg-cyan-400/10 text-white ring-1 ring-cyan-400/20' : 'text-slate-300 hover:bg-slate-900 hover:text-white'}`}
+                            >
+                                Pending
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setView('all')}
+                                className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${view === 'all' ? 'bg-cyan-400/10 text-white ring-1 ring-cyan-400/20' : 'text-slate-300 hover:bg-slate-900 hover:text-white'}`}
+                            >
+                                All users
+                            </button>
+                        </div>
                     </div>
-                    <div className="rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300">
-                        <button
-                            onClick={() => setView('pending')}
-                            className={`${view === 'pending' ? 'font-semibold text-white' : 'text-slate-300'}`}
-                        >Pending</button>
-                        <button
-                            onClick={() => setView('all')}
-                            className={`ml-3 ${view === 'all' ? 'font-semibold text-white' : 'text-slate-300'}`}
-                        >All users</button>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Pending</div>
+                            <div className="mt-2 text-2xl font-semibold text-white">{pendingEnrollments.length}</div>
+                        </div>
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Approved</div>
+                            <div className="mt-2 text-2xl font-semibold text-white">{approvedEnrollments.length}</div>
+                        </div>
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Rejected</div>
+                            <div className="mt-2 text-2xl font-semibold text-white">{rejectedEnrollments.length}</div>
+                        </div>
                     </div>
                 </div>
 
                 {error ? <p className="mb-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</p> : null}
 
-                <div className="grid gap-4">
+                <div className="mt-4 grid gap-4">
                     {view === 'pending' ? (
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold text-white">Pending requests</h2>
                             {pendingEnrollments.length ? (
-                                <ul className="space-y-3">
+                                <ul className="grid gap-3">
                                     {pendingEnrollments.map((item) => (
-                                        <li key={`${item.courseId}:${item.userId}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/10 transition hover:border-slate-700">
-                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <li key={`${item.courseId}:${item.userId}`} className="rounded-3xl border border-slate-800 bg-slate-900/70 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.16)] transition-colors hover:border-slate-700">
+                                            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                                 <div className="min-w-0">
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <span className="text-sm font-semibold text-white">{item.displayName || item.email || item.userId}</span>
@@ -198,21 +228,35 @@ export function AdminEnrollmentsPage() {
                                                             Pending
                                                         </span>
                                                     </div>
-                                                    <div className="mt-1 text-sm text-slate-400">
+                                                    <div className="mt-2 text-sm text-slate-400">
                                                         requested access to <span className="text-slate-200">{coursesById.get(item.courseId)?.title || item.courseId}</span>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex gap-2 self-start sm:self-center">
-                                                    <button onClick={() => handleApprove(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400 px-3 py-1 text-xs font-semibold text-slate-950">{busyId === `${item.courseId}:${item.userId}` ? '…' : 'Approve'}</button>
-                                                    <button onClick={() => handleReject(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100">Reject</button>
+                                                <div className="flex gap-2 self-start lg:self-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleApprove(item.courseId, item.userId)}
+                                                        disabled={busyId === `${item.courseId}:${item.userId}`}
+                                                        className="rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300 disabled:cursor-wait disabled:opacity-60"
+                                                    >
+                                                        {busyId === `${item.courseId}:${item.userId}` ? 'Approving…' : 'Approve'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleReject(item.courseId, item.userId)}
+                                                        disabled={busyId === `${item.courseId}:${item.userId}`}
+                                                        className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-400/40 hover:bg-rose-500/15 disabled:cursor-wait disabled:opacity-60"
+                                                    >
+                                                        Reject
+                                                    </button>
                                                 </div>
                                             </div>
                                         </li>
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-400">No pending requests.</p>
+                                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4 text-sm text-slate-400">No pending requests.</p>
                             )}
                         </div>
                     ) : (
@@ -222,35 +266,37 @@ export function AdminEnrollmentsPage() {
                                 const userEnrollments = enrollmentByUser.get(user.uid) ?? []
 
                                 return (
-                                    <div key={user.uid} className="flex items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-3">
-                                        <div>
-                                            <div className="font-semibold text-white">{user.displayName}</div>
-                                            <div className="text-sm text-slate-400">{user.email}</div>
-                                        </div>
+                                    <div key={user.uid} className="rounded-3xl border border-slate-800 bg-slate-900/70 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.12)]">
+                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                            <div>
+                                                <div className="font-semibold text-white">{user.displayName}</div>
+                                                <div className="text-sm text-slate-400">{user.email}</div>
+                                            </div>
 
-                                        <div className="flex items-center gap-2 overflow-x-auto">
-                                            {courses.map((c) => {
-                                                const enrollment = userEnrollments.find((ue) => ue.courseId === c.id) ?? null
-                                                const status = enrollment?.status ?? 'none'
-                                                const short = c.title.length > 18 ? `${c.title.slice(0, 15)}…` : c.title
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                {courses.map((c) => {
+                                                    const enrollment = userEnrollments.find((ue) => ue.courseId === c.id) ?? null
+                                                    const status = enrollment?.status ?? 'none'
+                                                    const short = c.title.length > 18 ? `${c.title.slice(0, 15)}…` : c.title
 
-                                                return (
-                                                    <div key={c.id} className="flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium" style={{ background: status === 'approved' ? 'rgba(16,185,129,0.08)' : status === 'pending' ? 'rgba(245,158,11,0.06)' : 'rgba(148,163,184,0.02)' }}>
-                                                        <span className={`${status === 'approved' ? 'text-emerald-300' : status === 'pending' ? 'text-amber-300' : 'text-slate-400'}`}>{status === 'approved' ? '✓' : status === 'pending' ? '…' : '—'}</span>
-                                                        <span className="text-slate-200">{short}</span>
-                                                        {status === 'approved' ? (
-                                                            <button onClick={() => handleRevoke(c.id, user.uid)} disabled={busyId === `${c.id}:${user.uid}`} className="ml-2 text-rose-200 text-[10px]">Revoke</button>
-                                                        ) : (
-                                                            <button onClick={() => handleApprove(c.id, user.uid)} disabled={busyId === `${c.id}:${user.uid}`} className="ml-2 text-cyan-200 text-[10px]">Grant</button>
-                                                        )}
-                                                    </div>
-                                                )
-                                            })}
+                                                    return (
+                                                        <div key={c.id} className="flex items-center gap-2 whitespace-nowrap rounded-full border border-slate-800 bg-slate-950/70 px-3 py-1 text-xs font-medium">
+                                                            <span className={`${status === 'approved' ? 'text-emerald-300' : status === 'pending' ? 'text-amber-300' : 'text-slate-500'}`}>{status === 'approved' ? '✓' : status === 'pending' ? '…' : '—'}</span>
+                                                            <span className="text-slate-200">{short}</span>
+                                                            {status === 'approved' ? (
+                                                                <button type="button" onClick={() => handleRevoke(c.id, user.uid)} disabled={busyId === `${c.id}:${user.uid}`} className="ml-1 rounded-full border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[10px] text-rose-100 transition hover:border-rose-400/40 disabled:cursor-wait disabled:opacity-60">Revoke</button>
+                                                            ) : (
+                                                                <button type="button" onClick={() => handleApprove(c.id, user.uid)} disabled={busyId === `${c.id}:${user.uid}`} className="ml-1 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[10px] text-cyan-100 transition hover:border-cyan-300/40 disabled:cursor-wait disabled:opacity-60">Grant</button>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                 )
                             }) : (
-                                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-400">No users found.</p>
+                                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4 text-sm text-slate-400">No users found.</p>
                             )}
                         </div>
                     )}
