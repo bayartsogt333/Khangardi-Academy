@@ -132,13 +132,22 @@ async function deleteLessonProgressForUsers(courseId: string, lessonIds: string[
     if (!lessonIds.length) return
 
     const enrollmentsSnapshot = await getDocs(collection(db, 'courses', courseId, 'enrollments'))
-    const userIds = enrollmentsSnapshot.docs.map((item) => item.id)
-
-    await Promise.all(
-        userIds.flatMap((userId) =>
-            lessonIds.map((lessonId) => deleteDoc(doc(db, 'courses', courseId, 'lessonProgress', userId, 'lessons', lessonId))),
-        ),
+    const usersSnapshot = await getDocs(collection(db, 'users'))
+    const userIds = Array.from(
+        new Set([
+            ...enrollmentsSnapshot.docs.map((item) => item.id),
+            ...usersSnapshot.docs.map((item) => item.id),
+        ]),
     )
+
+    const deleteOps = userIds.flatMap((userId) =>
+        lessonIds.map((lessonId) => deleteDoc(doc(db, 'courses', courseId, 'lessonProgress', userId, 'lessons', lessonId))),
+    )
+
+    const chunkSize = 200
+    for (let i = 0; i < deleteOps.length; i += chunkSize) {
+        await Promise.all(deleteOps.slice(i, i + chunkSize))
+    }
 }
 
 export async function loadAdminCourses(): Promise<CourseRecord[]> {

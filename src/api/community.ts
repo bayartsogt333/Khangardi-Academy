@@ -1,4 +1,17 @@
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore'
+import {
+    collection,
+    addDoc,
+    query,
+    orderBy,
+    onSnapshot,
+    serverTimestamp,
+    doc,
+    updateDoc,
+    arrayUnion,
+    arrayRemove,
+    deleteDoc,
+    getDocs,
+} from 'firebase/firestore'
 import { db } from './firebase'
 
 export type CommunityPost = {
@@ -42,6 +55,11 @@ export async function createPost(authorId: string, authorName: string, text: str
 }
 
 export async function deletePost(postId: string) {
+    const commentsRef = collection(db, 'community', 'posts', 'items', postId, 'comments')
+    const commentsSnapshot = await getDocs(commentsRef)
+
+    await Promise.all(commentsSnapshot.docs.map((commentDoc) => deleteDoc(commentDoc.ref)))
+
     const postRef = doc(db, 'community', 'posts', 'items', postId)
     await deleteDoc(postRef)
 }

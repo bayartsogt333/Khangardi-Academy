@@ -30,6 +30,30 @@ function enrollmentRef(courseId: string, userId: string) {
     return doc(db, 'courses', courseId, 'enrollments', userId)
 }
 
+async function loadCourseLessonIds(courseId: string) {
+    const sectionsSnapshot = await getDocs(collection(db, 'courses', courseId, 'sections'))
+    const lessonIdsBySection = await Promise.all(
+        sectionsSnapshot.docs.map(async (sectionDoc) => {
+            const lessonsSnapshot = await getDocs(collection(db, 'courses', courseId, 'sections', sectionDoc.id, 'lessons'))
+            return lessonsSnapshot.docs.map((lessonDoc) => lessonDoc.id)
+        }),
+    )
+
+    return lessonIdsBySection.flat()
+}
+
+async function deleteUserLessonProgress(courseId: string, userId: string) {
+    const lessonIds = await loadCourseLessonIds(courseId)
+
+    if (!lessonIds.length) {
+        return
+    }
+
+    await Promise.all(
+        lessonIds.map((lessonId) => deleteDoc(doc(db, 'courses', courseId, 'lessonProgress', userId, 'lessons', lessonId))),
+    )
+}
+
 export async function loadEnrollment(courseId: string, userId: string): Promise<EnrollmentRecord | null> {
     const snapshot = await getDoc(enrollmentRef(courseId, userId))
 
@@ -62,6 +86,7 @@ export async function enrollInCourse(courseId: string, userId: string, displayNa
 }
 
 export async function removeEnrollment(courseId: string, userId: string) {
+    await deleteUserLessonProgress(courseId, userId)
     await deleteDoc(enrollmentRef(courseId, userId))
 }
 
@@ -92,6 +117,7 @@ export async function rejectEnrollment(courseId: string, userId: string) {
 }
 
 export async function cancelEnrollmentRequest(courseId: string, userId: string) {
+    await deleteUserLessonProgress(courseId, userId)
     await deleteDoc(enrollmentRef(courseId, userId))
 }
 

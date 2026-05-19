@@ -91,7 +91,11 @@ service cloud.firestore {
           )
         );
 
-        allow delete: if request.auth != null && (request.auth.uid == resource.data.authorId || isAdmin());
+        allow delete: if request.auth != null && (
+          request.auth.uid == resource.data.authorId
+          || isAdmin()
+          || request.auth.uid == get(/databases/$(database)/documents/community/posts/items/$(postId)).data.authorId
+        );
       }
     }
 
