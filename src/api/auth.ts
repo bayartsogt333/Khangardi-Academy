@@ -12,6 +12,10 @@ import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { auth, db } from './firebase'
 import type { UserProfile, UserRole } from '../types/auth'
 
+function isUnauthorizedDomainError(error: unknown) {
+    return error instanceof Error && error.message.includes('auth/unauthorized-domain')
+}
+
 export type RegisterInput = {
     fullName: string
     email: string
@@ -97,7 +101,17 @@ export async function loginWithEmail(email: string, password: string) {
 
 export async function loginWithGoogle() {
     const provider = new GoogleAuthProvider()
-    await signInWithPopup(auth, provider)
+    try {
+        await signInWithPopup(auth, provider)
+    } catch (error) {
+        if (isUnauthorizedDomainError(error)) {
+            throw new Error(
+                'This domain is not authorized for Firebase Auth. Add the hosting domain to Firebase Console -> Authentication -> Settings -> Authorized domains.',
+            )
+        }
+
+        throw error
+    }
 
     const refreshedUser = auth.currentUser
     if (refreshedUser) {
