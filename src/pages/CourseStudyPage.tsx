@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { loadCourseById, loadCourseTree } from '../api/courses'
 import {
@@ -41,6 +41,107 @@ function CheckGlyph() {
         </svg>
     )
 }
+
+type LessonCardProps = {
+    lesson: LessonRecord
+    lessonIndex: number
+    isSelected: boolean
+    isCompleted: boolean
+    onSelect: (lessonId: string) => void
+}
+
+const LessonCard = memo(function LessonCard({ lesson, lessonIndex, isSelected, isCompleted, onSelect }: LessonCardProps) {
+    return (
+        <button
+            type="button"
+            onClick={() => onSelect(lesson.id)}
+            className={`group flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition duration-300 ease-out hover:-translate-y-0.5 hover:border-cyan-400/20 hover:bg-slate-900/95 hover:shadow-[0_12px_28px_rgba(0,0,0,0.22)] ${isSelected
+                ? 'border-cyan-400/20 bg-slate-900/95 shadow-[0_14px_30px_rgba(34,211,238,0.08)]'
+                : 'border-slate-800 bg-slate-950/70 text-slate-100'
+                }`}
+        >
+            <div className="flex items-center gap-3">
+                <span className="w-8 text-xs font-semibold text-slate-400 transition group-hover:text-cyan-200">{lessonIndex + 1}.</span>
+                <span className="font-medium text-white transition group-hover:text-cyan-50">{lesson.title}</span>
+            </div>
+            <small className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                {isCompleted ? (
+                    <span className="inline-flex items-center gap-2 text-emerald-300" aria-label="Completed" title="Completed">
+                        <CheckGlyph />
+                    </span>
+                ) : (
+                    ''
+                )}
+            </small>
+        </button>
+    )
+})
+
+type SectionCardProps = {
+    section: SectionRecord & { lessons: LessonRecord[] }
+    sectionIndex: number
+    isOpen: boolean
+    isSelected: boolean
+    selectedLessonId: string | null
+    completedLessonIdSet: Set<string>
+    onToggle: (section: SectionRecord & { lessons: LessonRecord[] }) => void
+    onSelectLesson: (sectionId: string, lessonId: string) => void
+}
+
+const SectionCard = memo(function SectionCard({
+    section,
+    sectionIndex,
+    isOpen,
+    isSelected,
+    selectedLessonId,
+    completedLessonIdSet,
+    onToggle,
+    onSelectLesson,
+}: SectionCardProps) {
+    return (
+        <div className="space-y-2">
+            <button
+                type="button"
+                onClick={() => onToggle(section)}
+                className={`group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-2xl border px-4 py-3 text-left transition duration-300 ease-out hover:-translate-y-0.5 hover:border-cyan-400/20 hover:bg-slate-900/95 hover:shadow-[0_14px_32px_rgba(0,0,0,0.28)] ${isSelected
+                    ? 'border-cyan-400/20 bg-slate-900/95 shadow-[0_16px_34px_rgba(34,211,238,0.08)]'
+                    : 'border-slate-800 bg-slate-950/70 text-slate-100'
+                    }`}
+            >
+                <span className="pointer-events-none absolute inset-y-0 left-0 w-1 rounded-r-full bg-gradient-to-b from-cyan-300/0 via-cyan-300/0 to-cyan-300/0 transition duration-300 group-hover:from-cyan-300/50 group-hover:via-cyan-300/80 group-hover:to-indigo-300/50" />
+                <div>
+                    <div className="font-semibold text-white transition group-hover:text-cyan-50">
+                        {sectionIndex + 1}. {section.title}
+                    </div>
+                    <div className="text-sm text-slate-400 transition group-hover:text-slate-300">
+                        {section.description || 'Section overview'}
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <small className="text-xs uppercase tracking-[0.24em] text-slate-400 transition group-hover:text-cyan-200">
+                        {section.lessons.length} lessons
+                    </small>
+                    <ChevronDown className={`h-4 w-4 text-slate-400 transition duration-300 ${isOpen ? 'rotate-180 text-cyan-300' : 'group-hover:text-cyan-200'}`} />
+                </div>
+            </button>
+
+            {isOpen ? (
+                <div className="space-y-2 pl-4 pr-1 pt-1">
+                    {section.lessons.map((lesson, lessonIndex) => (
+                        <LessonCard
+                            key={lesson.id}
+                            lesson={lesson}
+                            lessonIndex={lessonIndex}
+                            isSelected={lesson.id === selectedLessonId}
+                            isCompleted={completedLessonIdSet.has(lesson.id)}
+                            onSelect={(lessonId: string) => onSelectLesson(section.id, lessonId)}
+                        />
+                    ))}
+                </div>
+            ) : null}
+        </div>
+    )
+})
 
 export function CourseStudyPage() {
     const { courseId } = useParams()
@@ -272,6 +373,11 @@ export function CourseStudyPage() {
         [openSectionIdSet],
     )
 
+    const handleSelectLesson = useCallback((sectionId: string, lessonId: string) => {
+        setSelectedSectionId(sectionId)
+        setSelectedLessonId(lessonId)
+    }, [])
+
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -350,65 +456,17 @@ export function CourseStudyPage() {
 
                             <div className="mt-5 space-y-3">
                                 {tree.sections.map((section, sectionIndex) => (
-                                    <div key={section.id} className="space-y-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleToggleSection(section)}
-                                            className={`group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-2xl border px-4 py-3 text-left transition duration-300 ease-out hover:-translate-y-0.5 hover:border-cyan-400/20 hover:bg-slate-900/95 hover:shadow-[0_14px_32px_rgba(0,0,0,0.28)] ${section.id === selectedSectionId
-                                                    ? 'border-cyan-400/20 bg-slate-900/95 shadow-[0_16px_34px_rgba(34,211,238,0.08)]'
-                                                    : 'border-slate-800 bg-slate-950/70 text-slate-100'
-                                                }`}
-                                        >
-                                            <span className="pointer-events-none absolute inset-y-0 left-0 w-1 rounded-r-full bg-gradient-to-b from-cyan-300/0 via-cyan-300/0 to-cyan-300/0 transition duration-300 group-hover:from-cyan-300/50 group-hover:via-cyan-300/80 group-hover:to-indigo-300/50" />
-                                            <div>
-                                                <div className="font-semibold text-white transition group-hover:text-cyan-50">{sectionIndex + 1}. {section.title}</div>
-                                                <div className="text-sm text-slate-400 transition group-hover:text-slate-300">
-                                                    {section.description || 'Section overview'}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <small className="text-xs uppercase tracking-[0.24em] text-slate-400 transition group-hover:text-cyan-200">
-                                                    {section.lessons.length} lessons
-                                                </small>
-                                                <ChevronDown
-                                                    className={`h-4 w-4 text-slate-400 transition duration-300 ${openSectionIdSet.has(section.id) ? 'rotate-180 text-cyan-300' : 'group-hover:text-cyan-200'}`}
-                                                />
-                                            </div>
-                                        </button>
-
-                                        {openSectionIdSet.has(section.id) ? (
-                                            <div className="space-y-2 pl-4 pr-1 pt-1">
-                                                {section.lessons.map((lesson, lessonIndex) => (
-                                                    <button
-                                                        key={lesson.id}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setSelectedSectionId(section.id)
-                                                            setSelectedLessonId(lesson.id)
-                                                        }}
-                                                        className={`group flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition duration-300 ease-out hover:-translate-y-0.5 hover:border-cyan-400/20 hover:bg-slate-900/95 hover:shadow-[0_12px_28px_rgba(0,0,0,0.22)] ${lesson.id === selectedLessonId
-                                                            ? 'border-cyan-400/20 bg-slate-900/95 shadow-[0_14px_30px_rgba(34,211,238,0.08)]'
-                                                            : 'border-slate-800 bg-slate-950/70 text-slate-100'
-                                                            }`}
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="w-8 text-xs font-semibold text-slate-400 transition group-hover:text-cyan-200">{lessonIndex + 1}.</span>
-                                                            <span className="font-medium text-white transition group-hover:text-cyan-50">{lesson.title}</span>
-                                                        </div>
-                                                        <small className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                                                            {completedLessonIdSet.has(lesson.id) ? (
-                                                                <span className="inline-flex items-center gap-2 text-emerald-300" aria-label="Completed" title="Completed">
-                                                                    <CheckGlyph />
-                                                                </span>
-                                                            ) : (
-                                                                ''
-                                                            )}
-                                                        </small>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ) : null}
-                                    </div>
+                                    <SectionCard
+                                        key={section.id}
+                                        section={section}
+                                        sectionIndex={sectionIndex}
+                                        isOpen={openSectionIdSet.has(section.id)}
+                                        isSelected={section.id === selectedSectionId}
+                                        selectedLessonId={selectedLessonId}
+                                        completedLessonIdSet={completedLessonIdSet}
+                                        onToggle={handleToggleSection}
+                                        onSelectLesson={handleSelectLesson}
+                                    />
                                 ))}
                             </div>
                         </aside>

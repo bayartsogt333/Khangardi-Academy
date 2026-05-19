@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import Snowfall from './Snowfall'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Snowflake } from 'lucide-react'
@@ -21,10 +21,19 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
     const isAdmin = pathname.startsWith('/admin')
 
     const displayName = profile?.displayName || 'Member'
+    const initials = useMemo(() => displayName.split(' ').map((s) => s[0]).slice(0, 2).join(''), [displayName])
+
+    const goHome = useCallback(() => navigate('/'), [navigate])
+    const goClassroom = useCallback(() => navigate('/classroom'), [navigate])
+    const goCommunity = useCallback(() => navigate('/community'), [navigate])
+    const goAdmin = useCallback(() => navigate('/admin'), [navigate])
+    const toggleMobileMenu = useCallback(() => setMobileMenuOpen((current) => !current), [])
+    const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), [])
+    const toggleSnowfall = useCallback(() => setSnowfallEnabled((current) => !current), [])
 
     useEffect(() => {
-        setMobileMenuOpen(false)
-    }, [pathname])
+        closeMobileMenu()
+    }, [closeMobileMenu, pathname])
 
     const [snowfallEnabled, setSnowfallEnabled] = useState<boolean>(() => {
         try {
@@ -48,7 +57,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                 <div className="flex items-center justify-between gap-4 lg:hidden">
                     <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-400 text-lg font-black text-slate-950">
-                            {displayName.split(' ').map((s) => s[0]).slice(0, 2).join('')}
+                            {initials}
                         </div>
                         <div className="space-y-1">
                             <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Khangardi Academy</div>
@@ -58,7 +67,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
-                            onClick={() => setSnowfallEnabled((s) => !s)}
+                            onClick={toggleSnowfall}
                             aria-pressed={snowfallEnabled}
                             title={snowfallEnabled ? 'Disable winter mode' : 'Enable winter mode'}
                             className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
@@ -68,7 +77,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                         </button>
                         <button
                             type="button"
-                            onClick={() => setMobileMenuOpen((current) => !current)}
+                            onClick={toggleMobileMenu}
                             className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400/60 hover:text-white"
                             aria-expanded={mobileMenuOpen}
                             aria-label="Toggle navigation menu"
@@ -87,7 +96,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                             <div className="flex flex-col gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => navigate('/')}
+                                    onClick={goHome}
                                     className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isHome ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
                                 >
                                     Home
@@ -95,7 +104,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
 
                                 <button
                                     type="button"
-                                    onClick={() => navigate('/classroom')}
+                                    onClick={goClassroom}
                                     className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${isClassroom ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
                                 >
                                     Classroom
@@ -103,7 +112,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
 
                                 <button
                                     type="button"
-                                    onClick={() => navigate('/community')}
+                                    onClick={goCommunity}
                                     className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isCommunity ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
                                 >
                                     Community
@@ -112,7 +121,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                                 {profile?.role === 'admin' ? (
                                     <button
                                         type="button"
-                                        onClick={() => navigate('/admin')}
+                                        onClick={goAdmin}
                                         className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isAdmin ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
                                     >
                                         Admin
@@ -126,16 +135,6 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                                 >
                                     Logout
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setSnowfallEnabled((s) => !s)}
-                                    aria-pressed={snowfallEnabled}
-                                    title={snowfallEnabled ? 'Disable winter mode' : 'Enable winter mode'}
-                                    className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
-                                >
-                                    <Snowflake className={`h-4 w-4 ${snowfallEnabled ? 'animate-pulse text-cyan-200' : 'text-slate-400'}`} />
-                                    <span>Winter mode</span>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -144,7 +143,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                 <div className="hidden flex-col gap-5 lg:flex lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-400 text-lg font-black text-slate-950">
-                            {displayName.split(' ').map((s) => s[0]).slice(0, 2).join('')}
+                            {initials}
                         </div>
                         <div className="space-y-1">
                             <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Khangardi Academy</div>
@@ -155,7 +154,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                     <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:flex-row sm:items-center">
                         <button
                             type="button"
-                            onClick={() => navigate('/')}
+                            onClick={goHome}
                             className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isHome ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white'}`}
                         >
                             Home
@@ -163,7 +162,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
 
                         <button
                             type="button"
-                            onClick={() => navigate('/classroom')}
+                            onClick={goClassroom}
                             className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${isClassroom ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white'}`}
                         >
                             Classroom
@@ -171,7 +170,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
 
                         <button
                             type="button"
-                            onClick={() => navigate('/community')}
+                            onClick={goCommunity}
                             className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isCommunity ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white'}`}
                         >
                             Community
@@ -180,7 +179,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                         {profile?.role === 'admin' ? (
                             <button
                                 type="button"
-                                onClick={() => navigate('/admin')}
+                                onClick={goAdmin}
                                 className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isAdmin ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white'}`}
                             >
                                 Admin
@@ -196,7 +195,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                         </button>
                         <button
                             type="button"
-                            onClick={() => setSnowfallEnabled((s) => !s)}
+                            onClick={toggleSnowfall}
                             aria-pressed={snowfallEnabled}
                             title={snowfallEnabled ? 'Disable winter mode' : 'Enable winter mode'}
                             className={`ml-2 inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
@@ -210,4 +209,4 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
     )
 }
 
-export default SiteHeader
+export default memo(SiteHeader)
