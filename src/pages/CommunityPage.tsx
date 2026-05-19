@@ -20,6 +20,8 @@ import {
     type CommunityGroup,
     type CommunityPost,
 } from '../api/community'
+import { loadPublishedCourses } from '../api/courses'
+import { loadEnrollment } from '../api/enrollments'
 import SiteHeader from '../components/SiteHeader'
 
 export function CommunityPage() {
@@ -38,6 +40,9 @@ export function CommunityPage() {
     const [groupTitleDraft, setGroupTitleDraft] = useState('')
     const [groupDescriptionDraft, setGroupDescriptionDraft] = useState('')
     const [groupCoverFile, setGroupCoverFile] = useState<File | null>(null)
+    const [publishedCourses, setPublishedCourses] = useState<Array<{ id: string; title: string }>>([])
+    const [restrictToCourse, setRestrictToCourse] = useState(false)
+    const [selectedCourseForGroup, setSelectedCourseForGroup] = useState<string | null>(null)
 
     const editCoverPreview = useMemo(() => (editCoverFile ? URL.createObjectURL(editCoverFile) : null), [editCoverFile])
     const groupCoverPreview = useMemo(() => (groupCoverFile ? URL.createObjectURL(groupCoverFile) : null), [groupCoverFile])
@@ -73,13 +78,36 @@ export function CommunityPage() {
     const formatTime = useCallback((value: any) => {
         if (!value?.toDate) return ''
         return new Date(value.toDate()).toLocaleString()
-    }, [])
+    }, [profile?.role, profile?.uid])
 
     const refreshGroups = useCallback(async () => {
         setGroupsLoading(true)
         try {
             const nextGroups = await loadCommunityGroups()
-            setGroups(nextGroups)
+            // filter course-linked groups so only enrolled users see them
+            if (profile?.role === 'admin') {
+                setGroups(nextGroups)
+            } else {
+                const checks = await Promise.all(
+                    nextGroups.map(async (g) => {
+                        // groups that are course-linked: kind==='course' or custom with courseId
+                        const courseId = (g.kind === 'course' ? g.courseId : (g as any).courseId) as string | undefined | null
+                        if (courseId) {
+                            if (!profile?.uid) return { g, allowed: false }
+                            try {
+                                const enrollment = await loadEnrollment(courseId, profile.uid)
+                                return { g, allowed: !!enrollment && enrollment.status === 'approved' }
+                            } catch {
+                                return { g, allowed: false }
+                            }
+                        }
+
+                        return { g, allowed: true }
+                    }),
+                )
+
+                setGroups(checks.filter((c) => c.allowed).map((c) => c.g))
+            }
         } catch (error) {
             console.error(error)
         } finally {
@@ -90,6 +118,18 @@ export function CommunityPage() {
     useEffect(() => {
         void refreshGroups()
     }, [refreshGroups])
+
+    useEffect(() => {
+        // load published courses for admin group creation dropdown
+        void (async () => {
+            try {
+                const courses = await loadPublishedCourses()
+                setPublishedCourses(courses.map((c) => ({ id: c.id, title: c.title })))
+            } catch (err) {
+                console.error('Failed to load published courses', err)
+            }
+        })()
+    }, [])
 
     useEffect(() => {
         const unsub = listenToPosts((next) => {
@@ -229,7 +269,7 @@ export function CommunityPage() {
 
         setGroupSaving(true)
         try {
-            const newGroupId = await createGroup(title, description || 'Community discussion group', profile.uid)
+            const newGroupId = await createGroup(title, description || 'Community discussion group', profile.uid, restrictToCourse ? selectedCourseForGroup ?? undefined : undefined)
             // upload cover if provided
             if (groupCoverFile) {
                 try {
@@ -547,6 +587,21 @@ export function CommunityPage() {
                                 </div>
 
                                 <div className="mt-4 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <input id="restrict-to-course" type="checkbox" checked={restrictToCourse} onChange={(e) => { setRestrictToCourse(e.target.checked); if (!e.target.checked) setSelectedCourseForGroup(null) }} className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-cyan-400" />
+                                        <label htmlFor="restrict-to-course" className="text-sm text-slate-200">Restrict group to a published course</label>
+                                    </div>
+                                    {restrictToCourse ? (
+                                        <div>
+                                            <label className="sr-only">Select course</label>
+                                            <select value={selectedCourseForGroup ?? ''} onChange={(e) => setSelectedCourseForGroup(e.target.value || null)} className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-100">
+                                                <option value="">Choose a course (required)</option>
+                                                {publishedCourses.map((c) => (
+                                                    <option key={c.id} value={c.id}>{c.title}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ) : null}
                                     <input
                                         value={groupTitleDraft}
                                         onChange={(event) => setGroupTitleDraft(event.target.value)}

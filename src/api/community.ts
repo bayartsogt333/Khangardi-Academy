@@ -119,9 +119,9 @@ export function listenToPosts(onUpdate: (posts: CommunityPost[]) => void) {
     })
 }
 
-export async function createGroup(title: string, description: string, createdBy: string) {
+export async function createGroup(title: string, description: string, createdBy: string, courseId?: string | null) {
     const groupsRef = collection(db, 'community', 'groups', 'items')
-    const docRef = await addDoc(groupsRef, {
+    const payload: Record<string, unknown> = {
         title,
         description,
         kind: 'custom',
@@ -129,7 +129,11 @@ export async function createGroup(title: string, description: string, createdBy:
         createdBy,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-    })
+    }
+
+    if (courseId) payload['courseId'] = courseId
+
+    const docRef = await addDoc(groupsRef, payload)
 
     return docRef.id
 }
