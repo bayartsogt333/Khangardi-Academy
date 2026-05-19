@@ -47,4 +47,22 @@
         color: inherit;
         text-decoration: none;
     }
+
+    .progress-shine {
+        animation: progressShine 2.8s ease-in-out infinite;
+    }
+
+    @keyframes progressShine {
+
+        0%,
+        100% {
+            transform: translateX(-20%) skewX(-12deg);
+            opacity: 0.25;
+        }
+
+        50% {
+            transform: translateX(260%) skewX(-12deg);
+            opacity: 0.55;
+        }
+    }
 }

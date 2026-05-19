@@ -342,7 +342,7 @@ export function CourseStudyPage() {
 
                 {course && canAccess ? (
                     <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-                        <aside className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-black/20">
+                        <aside className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.32)] backdrop-blur-xl">
                             <div className="space-y-2">
                                 <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Sections</span>
                                 <h2 className="text-2xl font-semibold text-white">Course structure</h2>
@@ -354,26 +354,30 @@ export function CourseStudyPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleToggleSection(section)}
-                                            className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700`}
+                                            className={`group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-2xl border px-4 py-3 text-left transition duration-300 ease-out hover:-translate-y-0.5 hover:border-cyan-400/20 hover:bg-slate-900/95 hover:shadow-[0_14px_32px_rgba(0,0,0,0.28)] ${section.id === selectedSectionId
+                                                    ? 'border-cyan-400/20 bg-slate-900/95 shadow-[0_16px_34px_rgba(34,211,238,0.08)]'
+                                                    : 'border-slate-800 bg-slate-950/70 text-slate-100'
+                                                }`}
                                         >
+                                            <span className="pointer-events-none absolute inset-y-0 left-0 w-1 rounded-r-full bg-gradient-to-b from-cyan-300/0 via-cyan-300/0 to-cyan-300/0 transition duration-300 group-hover:from-cyan-300/50 group-hover:via-cyan-300/80 group-hover:to-indigo-300/50" />
                                             <div>
-                                                <div className="font-semibold text-white">{sectionIndex + 1}. {section.title}</div>
-                                                <div className="text-sm text-slate-400">
+                                                <div className="font-semibold text-white transition group-hover:text-cyan-50">{sectionIndex + 1}. {section.title}</div>
+                                                <div className="text-sm text-slate-400 transition group-hover:text-slate-300">
                                                     {section.description || 'Section overview'}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <small className="text-xs uppercase tracking-[0.24em] text-slate-400">
+                                                <small className="text-xs uppercase tracking-[0.24em] text-slate-400 transition group-hover:text-cyan-200">
                                                     {section.lessons.length} lessons
                                                 </small>
                                                 <ChevronDown
-                                                    className={`h-4 w-4 text-slate-400 transition ${openSectionIdSet.has(section.id) ? 'rotate-180 text-cyan-300' : ''}`}
+                                                    className={`h-4 w-4 text-slate-400 transition duration-300 ${openSectionIdSet.has(section.id) ? 'rotate-180 text-cyan-300' : 'group-hover:text-cyan-200'}`}
                                                 />
                                             </div>
                                         </button>
 
                                         {openSectionIdSet.has(section.id) ? (
-                                            <div className="space-y-2 pl-4">
+                                            <div className="space-y-2 pl-4 pr-1 pt-1">
                                                 {section.lessons.map((lesson, lessonIndex) => (
                                                     <button
                                                         key={lesson.id}
@@ -382,14 +386,14 @@ export function CourseStudyPage() {
                                                             setSelectedSectionId(section.id)
                                                             setSelectedLessonId(lesson.id)
                                                         }}
-                                                        className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${lesson.id === selectedLessonId
-                                                            ? 'border-indigo-400/40 bg-indigo-400/10 text-white'
-                                                            : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
+                                                        className={`group flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition duration-300 ease-out hover:-translate-y-0.5 hover:border-cyan-400/20 hover:bg-slate-900/95 hover:shadow-[0_12px_28px_rgba(0,0,0,0.22)] ${lesson.id === selectedLessonId
+                                                            ? 'border-cyan-400/20 bg-slate-900/95 shadow-[0_14px_30px_rgba(34,211,238,0.08)]'
+                                                            : 'border-slate-800 bg-slate-950/70 text-slate-100'
                                                             }`}
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            <span className="w-8 text-xs font-semibold text-slate-400">{lessonIndex + 1}.</span>
-                                                            <span className="font-medium text-white">{lesson.title}</span>
+                                                            <span className="w-8 text-xs font-semibold text-slate-400 transition group-hover:text-cyan-200">{lessonIndex + 1}.</span>
+                                                            <span className="font-medium text-white transition group-hover:text-cyan-50">{lesson.title}</span>
                                                         </div>
                                                         <small className="text-xs uppercase tracking-[0.24em] text-slate-500">
                                                             {completedLessonIdSet.has(lesson.id) ? (
@@ -410,7 +414,7 @@ export function CourseStudyPage() {
                         </aside>
 
                         <section className="space-y-6">
-                            <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-0 shadow-xl shadow-black/20 overflow-hidden">
+                            <article className="overflow-hidden rounded-3xl border border-slate-800/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.96)_0%,rgba(2,6,23,0.94)_100%)] p-0 shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl">
                                 <div className="p-6">
                                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                         <div>
@@ -422,9 +426,10 @@ export function CourseStudyPage() {
                                         <div className="mt-3 lg:mt-0">
                                             <div className="w-full max-w-xs">
                                                 <div className="mb-2 text-xs text-slate-400">Progress</div>
-                                                <div className="relative h-6 w-full rounded-full bg-slate-800">
-                                                    <div className="absolute left-0 top-0 h-6 rounded-full bg-emerald-400" style={{ width: `${completionPercent}%` }} />
-                                                    <div className="relative z-10 flex h-6 items-center justify-center text-sm font-semibold text-slate-950">
+                                                <div className="relative h-6 w-full overflow-hidden rounded-full bg-slate-800/90 ring-1 ring-white/5">
+                                                    <div className="absolute left-0 top-0 h-6 rounded-full bg-gradient-to-r from-emerald-300 via-cyan-300 to-indigo-400 transition-[width] duration-700 ease-out" style={{ width: `${completionPercent}%` }} />
+                                                    <div className="progress-shine absolute top-0 h-6 w-1/3 rounded-full bg-white/20 blur-[1px]" />
+                                                    <div className="relative z-10 flex h-6 items-center justify-center text-sm font-semibold text-slate-950 mix-blend-screen">
                                                         {completionPercent}%
                                                     </div>
                                                 </div>
@@ -433,11 +438,11 @@ export function CourseStudyPage() {
                                     </div>
                                 </div>
 
-                                <div className="border-t border-slate-800/80 bg-slate-900/60 p-6">
+                                <div className="border-t border-slate-800/80 bg-slate-950/40 p-6">
                                     <div className="flex flex-col gap-6">
                                         <div className="w-full">
                                             {youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ? (
-                                                <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
+                                                <div className="aspect-video w-full overflow-hidden rounded-[28px] border border-slate-800 bg-black shadow-[0_20px_48px_rgba(0,0,0,0.30)] ring-1 ring-white/5">
                                                     <iframe
                                                         src={youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ?? undefined}
                                                         title={selectedLesson?.title || 'Lesson video'}
@@ -447,68 +452,74 @@ export function CourseStudyPage() {
                                                     />
                                                 </div>
                                             ) : (
-                                                <div className="flex min-h-[320px] items-center justify-center px-6 text-center text-slate-400 rounded-xl border border-slate-800">
+                                                <div className="flex min-h-[320px] items-center justify-center rounded-[28px] border border-slate-800 bg-slate-950/40 px-6 text-center text-slate-400">
                                                     No video selected yet.
                                                 </div>
                                             )}
                                         </div>
 
                                         <div className="w-full">
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Lesson</div>
-                                                    <h2 className="mt-1 text-xl font-semibold text-white">{selectedLesson?.title || 'Pick a lesson'}</h2>
-                                                    <p className="mt-2 max-w-prose whitespace-pre-line text-sm leading-7 text-slate-300">{selectedLesson?.notes || 'Choose a lesson from the section list to see notes and resources.'}</p>
-                                                </div>
+                                            <div className="rounded-[28px] border border-slate-800/80 bg-slate-950/55 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                                                <div className="space-y-4">
+                                                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
+                                                        <span>Lesson</span>
+                                                        <span className="rounded-full border border-slate-700/80 bg-slate-900/80 px-2.5 py-1 text-[10px] tracking-[0.18em] text-slate-300">
+                                                            {selectedLesson?.title || 'Pick a lesson'}
+                                                        </span>
+                                                    </div>
 
-                                                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                                                    <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Resources</div>
+                                                    {selectedLesson?.notes ? (
+                                                        <p className="max-w-prose whitespace-pre-line text-sm leading-7 text-slate-300">
+                                                            {selectedLesson.notes}
+                                                        </p>
+                                                    ) : null}
 
                                                     {selectedLesson?.resourceLinks.length ? (
-                                                        <ul className="mt-3 space-y-2 text-sm">
-                                                            {selectedLesson.resourceLinks.map((link) => (
-                                                                <li key={`${link.title}-${link.url}`} className="flex items-start gap-3">
-                                                                    <a
-                                                                        href={link.url}
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="inline-flex flex-1 items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
-                                                                    >
-                                                                        <LinkGlyph />
-                                                                        <span className="break-words">{link.title || link.url}</span>
-                                                                    </a>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={async () => {
-                                                                            try {
-                                                                                await navigator.clipboard.writeText(link.url)
-                                                                                setCopiedLink(link.url)
-                                                                                setTimeout(() => setCopiedLink(''), 1800)
-                                                                            } catch { }
-                                                                        }}
-                                                                        className="ml-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100"
-                                                                    >
-                                                                        {copiedLink === link.url ? 'Copied' : 'Copy'}
-                                                                    </button>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    ) : (
-                                                        <p className="mt-3 text-sm text-slate-400">No resource links for this lesson.</p>
-                                                    )}
+                                                        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.18)]">
+                                                            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Resources</div>
 
-                                                </div>
-
-                                                <div>
-                                                    {!isAdmin && selectedLesson ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleToggleLessonProgress}
-                                                            className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
-                                                        >
-                                                            {selectedLessonCompleted ? 'Mark incomplete' : 'Mark complete'}
-                                                        </button>
+                                                            <ul className="mt-3 space-y-2 text-sm">
+                                                                {selectedLesson.resourceLinks.map((link) => (
+                                                                    <li key={`${link.title}-${link.url}`} className="flex items-start gap-3">
+                                                                        <a
+                                                                            href={link.url}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="inline-flex flex-1 items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
+                                                                        >
+                                                                            <LinkGlyph />
+                                                                            <span className="break-words">{link.title || link.url}</span>
+                                                                        </a>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={async () => {
+                                                                                try {
+                                                                                    await navigator.clipboard.writeText(link.url)
+                                                                                    setCopiedLink(link.url)
+                                                                                    setTimeout(() => setCopiedLink(''), 1800)
+                                                                                } catch { }
+                                                                            }}
+                                                                            className="ml-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100"
+                                                                        >
+                                                                            {copiedLink === link.url ? 'Copied' : 'Copy'}
+                                                                        </button>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
                                                     ) : null}
+
+                                                    <div className="border-t border-slate-800 pt-4">
+                                                        {!isAdmin && selectedLesson ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleToggleLessonProgress}
+                                                                className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
+                                                            >
+                                                                {selectedLessonCompleted ? 'Mark incomplete' : 'Mark complete'}
+                                                            </button>
+                                                        ) : null}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
