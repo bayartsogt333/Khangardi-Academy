@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, BookOpen, Hash, Heart, MessageCircle, Plus, Send, Sparkles, Trash2 } from 'lucide-react'
+import { AlertTriangle, BookOpen, Edit3, Hash, Heart, MessageCircle, Plus, Send, Sparkles, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import {
     createComment,
     createGroup,
+    deleteGroup,
     createPost,
     deleteComment,
     deletePost,
@@ -12,6 +13,10 @@ import {
     loadCommunityGroups,
     toggleLikeComment,
     toggleLikePost,
+    uploadGroupCover,
+    setGroupCover,
+    updateGroup,
+    replaceGroupCover,
     type CommunityGroup,
     type CommunityPost,
 } from '../api/community'
@@ -25,12 +30,29 @@ export function CommunityPage() {
     const [selectedGroupId, setSelectedGroupId] = useState('general')
     const [groupsLoading, setGroupsLoading] = useState(true)
     const [groupSaving, setGroupSaving] = useState(false)
+    const [groupActionId, setGroupActionId] = useState('')
+    const [editingGroupId, setEditingGroupId] = useState('')
+    const [editGroupTitleDraft, setEditGroupTitleDraft] = useState('')
+    const [editGroupDescriptionDraft, setEditGroupDescriptionDraft] = useState('')
+    const [editCoverFile, setEditCoverFile] = useState<File | null>(null)
     const [groupTitleDraft, setGroupTitleDraft] = useState('')
     const [groupDescriptionDraft, setGroupDescriptionDraft] = useState('')
+    const [groupCoverFile, setGroupCoverFile] = useState<File | null>(null)
+
+    const editCoverPreview = useMemo(() => (editCoverFile ? URL.createObjectURL(editCoverFile) : null), [editCoverFile])
+    const groupCoverPreview = useMemo(() => (groupCoverFile ? URL.createObjectURL(groupCoverFile) : null), [groupCoverFile])
+
+    useEffect(() => {
+        return () => {
+            if (editCoverPreview) URL.revokeObjectURL(editCoverPreview)
+            if (groupCoverPreview) URL.revokeObjectURL(groupCoverPreview)
+        }
+    }, [editCoverPreview, groupCoverPreview])
 
     const [deleteTarget, setDeleteTarget] = useState<
         | { kind: 'post'; postId: string; title: string }
         | { kind: 'comment'; postId: string; commentId: string; title: string }
+        | { kind: 'group'; groupId: string; title: string }
         | null
     >(null)
     const [deleting, setDeleting] = useState(false)
@@ -41,6 +63,12 @@ export function CommunityPage() {
     const [commentTextByPost, setCommentTextByPost] = useState<Record<string, string>>({})
     const [commentsByPost, setCommentsByPost] = useState<Record<string, any[]>>({})
     const [openRepliesByPost, setOpenRepliesByPost] = useState<Record<string, boolean>>({})
+    const [lastSeenByGroup, setLastSeenByGroup] = useState<Record<string, number>>({})
+
+    const unreadStorageKey = useMemo(
+        () => `community:lastSeen:${profile?.uid ?? 'guest'}`,
+        [profile?.uid],
+    )
 
     const formatTime = useCallback((value: any) => {
         if (!value?.toDate) return ''
@@ -72,6 +100,25 @@ export function CommunityPage() {
     }, [])
 
     useEffect(() => {
+        try {
+            const raw = localStorage.getItem(unreadStorageKey)
+            if (!raw) {
+                setLastSeenByGroup({})
+                return
+            }
+
+            const parsed = JSON.parse(raw) as Record<string, number>
+            if (parsed && typeof parsed === 'object') {
+                setLastSeenByGroup(parsed)
+            } else {
+                setLastSeenByGroup({})
+            }
+        } catch {
+            setLastSeenByGroup({})
+        }
+    }, [unreadStorageKey])
+
+    useEffect(() => {
         if (!groups.length) return
         const hasSelected = groups.some((group) => group.id === selectedGroupId)
         if (!hasSelected) {
@@ -83,6 +130,10 @@ export function CommunityPage() {
         () => groups.find((group) => group.id === selectedGroupId) ?? groups[0] ?? null,
         [groups, selectedGroupId],
     )
+
+    const postCreatedAtMs = useCallback((post: CommunityPost) => {
+        return post.createdAt?.toDate ? post.createdAt.toDate().getTime() : 0
+    }, [])
 
     useEffect(() => {
         if (!selectedGroup?.id) return
@@ -102,6 +153,44 @@ export function CommunityPage() {
         if (!selectedGroup?.id) return []
         return posts.filter((post) => (post.groupId ? post.groupId === selectedGroup.id : selectedGroup.id === 'general'))
     }, [posts, selectedGroup?.id])
+
+    const postsByGroupId = useMemo(() => {
+        const map: Record<string, CommunityPost[]> = {}
+        for (const group of groups) {
+            map[group.id] = posts.filter((post) => (post.groupId ? post.groupId === group.id : group.id === 'general'))
+        }
+        return map
+    }, [groups, posts])
+
+    const unreadCountByGroup = useMemo(() => {
+        const result: Record<string, number> = {}
+        for (const group of groups) {
+            const seenAt = lastSeenByGroup[group.id] ?? 0
+            const unreadCount = (postsByGroupId[group.id] ?? []).filter((post) => {
+                if (profile?.uid && post.authorId === profile.uid) return false
+                return postCreatedAtMs(post) > seenAt
+            }).length
+            result[group.id] = unreadCount
+        }
+        return result
+    }, [groups, lastSeenByGroup, postCreatedAtMs, postsByGroupId, profile?.uid])
+
+    useEffect(() => {
+        if (!selectedGroup?.id) return
+        const groupPosts = postsByGroupId[selectedGroup.id] ?? []
+        if (!groupPosts.length) return
+
+        const latestPostMs = groupPosts.reduce((max, post) => Math.max(max, postCreatedAtMs(post)), 0)
+        if (!latestPostMs) return
+
+        setLastSeenByGroup((current) => {
+            if ((current[selectedGroup.id] ?? 0) >= latestPostMs) {
+                return current
+            }
+
+            return { ...current, [selectedGroup.id]: latestPostMs }
+        })
+    }, [postCreatedAtMs, postsByGroupId, selectedGroup?.id])
 
     const activeAuthors = useMemo(() => {
         const seen = new Map<string, string>()
@@ -141,8 +230,19 @@ export function CommunityPage() {
         setGroupSaving(true)
         try {
             const newGroupId = await createGroup(title, description || 'Community discussion group', profile.uid)
+            // upload cover if provided
+            if (groupCoverFile) {
+                try {
+                    const uploaded = await uploadGroupCover(newGroupId, groupCoverFile)
+                    await setGroupCover(newGroupId, uploaded.url, uploaded.path)
+                } catch (uploadErr) {
+                    console.error('Failed to upload cover', uploadErr)
+                }
+            }
+
             setGroupTitleDraft('')
             setGroupDescriptionDraft('')
+            setGroupCoverFile(null)
             await refreshGroups()
             setSelectedGroupId(newGroupId)
         } catch (error) {
@@ -150,7 +250,49 @@ export function CommunityPage() {
         } finally {
             setGroupSaving(false)
         }
-    }, [groupDescriptionDraft, groupTitleDraft, isAdmin, profile, refreshGroups])
+    }, [groupDescriptionDraft, groupTitleDraft, groupCoverFile, isAdmin, profile, refreshGroups])
+
+    const startEditGroup = useCallback((group: CommunityGroup) => {
+        setEditingGroupId(group.id)
+        setEditGroupTitleDraft(group.title)
+        setEditGroupDescriptionDraft(group.description)
+    }, [])
+
+    const cancelEditGroup = useCallback(() => {
+        setEditingGroupId('')
+        setEditGroupTitleDraft('')
+        setEditGroupDescriptionDraft('')
+    }, [])
+
+    const handleSaveGroupEdit = useCallback(async () => {
+        if (!editingGroupId || !isAdmin) return
+        const title = editGroupTitleDraft.trim()
+        const description = editGroupDescriptionDraft.trim()
+        if (!title) return
+
+        setGroupActionId(editingGroupId)
+        try {
+            await updateGroup(editingGroupId, title, description || 'Community discussion group')
+            if (editCoverFile) {
+                try {
+                    // Use replaceGroupCover so the previous Storage file is deleted
+                    await replaceGroupCover(editingGroupId, editCoverFile)
+                } catch (err) {
+                    console.error('Cover replace failed', err)
+                }
+            }
+            await refreshGroups()
+            cancelEditGroup()
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setGroupActionId('')
+        }
+    }, [cancelEditGroup, editGroupDescriptionDraft, editGroupTitleDraft, editingGroupId, isAdmin, refreshGroups])
+
+    const handleDeleteGroup = useCallback((group: CommunityGroup) => {
+        setDeleteTarget({ kind: 'group', groupId: group.id, title: group.title })
+    }, [])
 
     const handleToggleLike = useCallback(
         async (post: CommunityPost) => {
@@ -200,16 +342,24 @@ export function CommunityPage() {
         try {
             if (deleteTarget.kind === 'post') {
                 await deletePost(deleteTarget.postId)
+            } else if (deleteTarget.kind === 'group') {
+                setGroupActionId(deleteTarget.groupId)
+                await deleteGroup(deleteTarget.groupId)
+                await refreshGroups()
+                if (selectedGroupId === deleteTarget.groupId) {
+                    setSelectedGroupId('general')
+                }
             } else {
                 await deleteComment(deleteTarget.postId, deleteTarget.commentId)
             }
         } catch (error) {
             console.error(error)
         } finally {
+            setGroupActionId('')
             setDeleting(false)
             setDeleteTarget(null)
         }
-    }, [deleteTarget])
+    }, [deleteTarget, refreshGroups, selectedGroupId])
 
     const handleToggleCommentLike = useCallback(
         async (postId: string, comment: any) => {
@@ -248,41 +398,139 @@ export function CommunityPage() {
 
                                 {groups.map((group) => {
                                     const selected = group.id === selectedGroup?.id
-                                    const groupPostsCount = posts.filter((post) => (post.groupId ? post.groupId === group.id : group.id === 'general')).length
+                                    const groupPosts = postsByGroupId[group.id] ?? []
+                                    const groupPostsCount = groupPosts.length
+                                    const unreadCount = unreadCountByGroup[group.id] ?? 0
+                                    /* skip computing last-post timestamp to keep card concise */
+                                    const accent = group.accentColor || '#22d3ee'
+                                    const isEditingThis = editingGroupId === group.id
+                                    const canManageGroup = isAdmin && group.kind === 'custom'
 
                                     return (
-                                        <button
+                                        <article
                                             key={group.id}
-                                            type="button"
                                             onClick={() => setSelectedGroupId(group.id)}
-                                            className={`w-full rounded-3xl border p-4 text-left transition duration-200 hover:-translate-y-0.5 ${selected
+                                            className={`cursor-pointer overflow-hidden rounded-3xl border text-left transition duration-200 hover:-translate-y-0.5 ${selected
                                                 ? 'border-cyan-400/40 bg-cyan-400/10 shadow-[0_18px_48px_rgba(34,211,238,0.08)]'
                                                 : 'border-slate-800 bg-slate-950/70 hover:border-cyan-400/25 hover:bg-slate-900/90'
                                                 }`}
                                         >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        {group.kind === 'course' ? (
-                                                            <BookOpen className="h-4 w-4 text-cyan-300" />
-                                                        ) : group.kind === 'custom' ? (
-                                                            <Sparkles className="h-4 w-4 text-indigo-300" />
-                                                        ) : (
-                                                            <Hash className="h-4 w-4 text-cyan-300" />
-                                                        )}
-                                                        <div className="truncate font-semibold text-white">{group.title}</div>
+                                            <div className="flex items-start gap-3 p-4">
+                                                <div
+                                                    className="h-12 w-12 flex-shrink-0 rounded-md overflow-hidden"
+                                                    style={group.coverImageUrl
+                                                        ? { backgroundImage: `url(${group.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                                                        : { background: `linear-gradient(140deg, ${accent}66 0%, rgba(15,23,42,0.96) 60%)` }}
+                                                />
+
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            {group.kind === 'course' ? (
+                                                                <BookOpen className="h-4 w-4 text-cyan-300" />
+                                                            ) : group.kind === 'custom' ? (
+                                                                <Sparkles className="h-4 w-4 text-indigo-300" />
+                                                            ) : (
+                                                                <Hash className="h-4 w-4 text-cyan-300" />
+                                                            )}
+                                                            <div className="truncate font-semibold text-white">{group.title}</div>
+                                                        </div>
+
+                                                        {unreadCount > 0 ? (
+                                                            <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                                                                {unreadCount}
+                                                            </span>
+                                                        ) : null}
                                                     </div>
                                                     <div className="mt-2 line-clamp-2 text-sm leading-6 text-slate-400">{group.description}</div>
                                                 </div>
-                                                <span className="rounded-full border border-slate-700 bg-slate-950 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-300">
-                                                    {group.kind}
-                                                </span>
                                             </div>
-                                            <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
-                                                <span>{group.kind === 'course' && group.courseId ? `Course: ${group.courseId}` : 'Open discussion'}</span>
-                                                <span>{groupPostsCount} posts</span>
+
+                                            <div className="space-y-3 p-4 pt-0">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="text-xs text-slate-400">{groupPostsCount} threads</div>
+                                                    {selected ? <span className="text-cyan-300">Selected</span> : null}
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-2">
+                                                    {canManageGroup ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); startEditGroup(group) }}
+                                                                disabled={groupActionId === group.id}
+                                                                className="inline-flex items-center gap-1 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                <Edit3 className="h-3.5 w-3.5" />
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group) }}
+                                                                disabled={groupActionId === group.id}
+                                                                className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-400/40 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </>
+                                                    ) : null}
+                                                </div>
+
+                                                {isEditingThis ? (
+                                                    <div className="space-y-2 rounded-2xl border border-slate-700 bg-slate-950/60 p-3">
+                                                        <input
+                                                            value={editGroupTitleDraft}
+                                                            onChange={(event) => setEditGroupTitleDraft(event.target.value)}
+                                                            placeholder="Group title"
+                                                            className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
+                                                        />
+                                                        <textarea
+                                                            value={editGroupDescriptionDraft}
+                                                            onChange={(event) => setEditGroupDescriptionDraft(event.target.value)}
+                                                            placeholder="Group description"
+                                                            rows={3}
+                                                            className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
+                                                        />
+                                                        <div onClick={(e) => e.stopPropagation()}>
+                                                            <label className="text-xs text-slate-400">Replace cover (optional)</label>
+                                                            <label className="mt-2 flex cursor-pointer items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-900 px-3 py-2 transition hover:border-slate-600" htmlFor={`edit-cover-${group.id}`}>
+                                                                {editCoverPreview ? (
+                                                                    <img src={editCoverPreview} alt="preview" className="h-12 w-12 rounded-md object-cover" />
+                                                                ) : (
+                                                                    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-sm text-slate-500">Cover</div>
+                                                                )}
+                                                                <div className="flex-1 text-sm text-slate-200">Click to choose a new cover image (optional)</div>
+                                                                <input
+                                                                    id={`edit-cover-${group.id}`}
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    onChange={(e) => setEditCoverFile(e.target.files?.[0] ?? null)}
+                                                                    className="hidden"
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => void handleSaveGroupEdit()}
+                                                                disabled={groupActionId === group.id || !editGroupTitleDraft.trim()}
+                                                                className="rounded-xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-3 py-2 text-xs font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                {groupActionId === group.id ? 'Saving…' : 'Save'}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={cancelEditGroup}
+                                                                disabled={groupActionId === group.id}
+                                                                className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : null}
                                             </div>
-                                        </button>
+                                        </article>
                                     )
                                 })}
                             </div>
@@ -312,6 +560,24 @@ export function CommunityPage() {
                                         rows={4}
                                         className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                                     />
+                                    <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                                        <label className="text-xs text-slate-400">Cover image (optional)</label>
+                                        <label className="mt-2 flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-700/60 bg-slate-950/70 px-3 py-2 transition hover:border-slate-600" htmlFor="create-cover">
+                                            {groupCoverPreview ? (
+                                                <img src={groupCoverPreview} alt="preview" className="h-12 w-12 rounded-md object-cover" />
+                                            ) : (
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-sm text-slate-500">Cover</div>
+                                            )}
+                                            <div className="flex-1 text-sm text-slate-200">Choose a cover image (optional)</div>
+                                            <input
+                                                id="create-cover"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => setGroupCoverFile(e.target.files?.[0] ?? null)}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => void handleCreateGroup()}
@@ -538,8 +804,13 @@ export function CommunityPage() {
                                 <div className="min-w-0">
                                     <h3 className="text-xl font-semibold text-white">Confirm delete</h3>
                                     <p className="mt-2 text-sm leading-6 text-slate-300">
-                                        {deleteTarget.kind === 'post' ? 'Delete this post?' : 'Delete this comment?'}
+                                        {deleteTarget.kind === 'post'
+                                            ? 'Delete this post?'
+                                            : deleteTarget.kind === 'group'
+                                                ? 'Delete this group and all posts inside it?'
+                                                : 'Delete this comment?'}
                                     </p>
+                                    <p className="mt-1 truncate text-xs text-slate-500">{deleteTarget.title}</p>
                                 </div>
                             </div>
 
