@@ -42,7 +42,16 @@ const emptySectionDraft: SectionDraft = {
 const emptyLessonDraft: LessonDraft = {
     title: '',
     youtubeUrl: '',
+    notesTitle: '',
     notes: '',
+    resourceLinks: [{ id: 'link-0', title: '', url: '' }],
+}
+
+let resourceLinkCounter = 0
+
+function createResourceLink() {
+    resourceLinkCounter += 1
+    return { id: `link-${Date.now()}-${resourceLinkCounter}`, title: '', url: '' }
 }
 
 type CourseTree = {
@@ -223,7 +232,11 @@ export function AdminCourseBuilder() {
             setLessonDraft({
                 title: selectedLesson.title,
                 youtubeUrl: selectedLesson.youtubeUrl,
+                notesTitle: selectedLesson.notesTitle,
                 notes: selectedLesson.notes,
+                resourceLinks: selectedLesson.resourceLinks.length
+                    ? selectedLesson.resourceLinks.map((link, index) => ({ id: `link-${selectedLesson.id}-${index}`, title: link.title, url: link.url }))
+                    : [createResourceLink()],
             })
             return
         }
@@ -260,16 +273,34 @@ export function AdminCourseBuilder() {
         setSelection((current) => ({ ...current, lessonId }))
     }
 
-    const handleSectionEdit = (sectionId: string) => {
-        selectSection(sectionId)
+    const addResourceLinkRow = () => {
+        setLessonDraft((current) => ({
+            ...current,
+            resourceLinks: [...current.resourceLinks, createResourceLink()],
+        }))
     }
 
-    const handleLessonEdit = (sectionId: string, lessonId: string) => {
-        setSelection((current) => ({ ...current, sectionId, lessonId }))
+    const updateResourceLinkRow = (index: number, field: 'title' | 'url', value: string) => {
+        setLessonDraft((current) => ({
+            ...current,
+            resourceLinks: current.resourceLinks.map((item, currentIndex) =>
+                currentIndex === index ? { ...item, [field]: value } : item,
+            ),
+        }))
+    }
+
+    const removeResourceLinkRow = (index: number) => {
+        setLessonDraft((current) => ({
+            ...current,
+            resourceLinks:
+                current.resourceLinks.length > 1
+                    ? current.resourceLinks.filter((_, currentIndex) => currentIndex !== index)
+                    : [createResourceLink()],
+        }))
     }
 
     const handleSectionDelete = async (sectionId: string) => {
-        if (!selection.courseId || !window.confirm('Delete this section and all of its lessons?')) return
+        if (!selection.courseId) return
 
         setBusy(true)
         setError('')
@@ -292,7 +323,7 @@ export function AdminCourseBuilder() {
     }
 
     const handleLessonDelete = async (sectionId: string, lessonId: string) => {
-        if (!selection.courseId || !window.confirm('Delete this lesson?')) return
+        if (!selection.courseId) return
 
         setBusy(true)
         setError('')
@@ -584,15 +615,14 @@ export function AdminCourseBuilder() {
                                     </button>
 
                                     <div className="tree-actions">
-                                        <button type="button" className="icon-button" onClick={() => handleSectionEdit(section.id)}>
-                                            Edit
-                                        </button>
                                         <button
                                             type="button"
                                             className="icon-button danger"
+                                            aria-label="Delete section"
+                                            title="Delete section"
                                             onClick={() => handleSectionDelete(section.id)}
                                         >
-                                            Delete
+                                            ×
                                         </button>
                                     </div>
                                 </div>
@@ -620,23 +650,18 @@ export function AdminCourseBuilder() {
                                                 onClick={() => selectLesson(lesson.id)}
                                             >
                                                 <span>{lesson.title}</span>
-                                                <small>{lesson.youtubeVideoId}</small>
+                                                <small>{lesson.order}. lesson</small>
                                             </button>
 
                                             <div className="tree-actions">
                                                 <button
                                                     type="button"
-                                                    className="icon-button"
-                                                    onClick={() => handleLessonEdit(section.id, lesson.id)}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    type="button"
                                                     className="icon-button danger"
+                                                    aria-label="Delete lesson"
+                                                    title="Delete lesson"
                                                     onClick={() => handleLessonDelete(section.id, lesson.id)}
                                                 >
-                                                    Delete
+                                                    ×
                                                 </button>
                                             </div>
                                         </div>
@@ -823,20 +848,80 @@ export function AdminCourseBuilder() {
                                     disabled={!selection.sectionId}
                                 />
                             </label>
+
+                            <label>
+                                <span>Notes title</span>
+                                <input
+                                    value={lessonDraft.notesTitle}
+                                    onChange={(event) =>
+                                        setLessonDraft((current) => ({ ...current, notesTitle: event.target.value }))
+                                    }
+                                    placeholder="What to remember"
+                                    disabled={!selection.sectionId}
+                                />
+                            </label>
                         </div>
 
-                        <label>
-                            <span>Rich notes</span>
-                            <textarea
-                                value={lessonDraft.notes}
-                                onChange={(event) =>
-                                    setLessonDraft((current) => ({ ...current, notes: event.target.value }))
-                                }
-                                rows={5}
-                                placeholder="Lesson notes"
-                                disabled={!selection.sectionId}
-                            />
-                        </label>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm font-medium text-slate-200">Links</span>
+                                <button
+                                    type="button"
+                                    onClick={addResourceLinkRow}
+                                    disabled={!selection.sectionId}
+                                    className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300/40 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    + Add link
+                                </button>
+                            </div>
+
+                            <label>
+                                <span>Rich notes</span>
+                                <textarea
+                                    value={lessonDraft.notes}
+                                    onChange={(event) =>
+                                        setLessonDraft((current) => ({ ...current, notes: event.target.value }))
+                                    }
+                                    rows={5}
+                                    placeholder="Lesson notes"
+                                    disabled={!selection.sectionId}
+                                />
+                            </label>
+                            <div className="space-y-3">
+                                {lessonDraft.resourceLinks.map((link, index) => (
+                                    <div key={link.id} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 md:grid-cols-[1fr_1.2fr_auto] md:items-end">
+                                        <label>
+                                            <span>Link title</span>
+                                            <input
+                                                value={link.title}
+                                                onChange={(event) => updateResourceLinkRow(index, 'title', event.target.value)}
+                                                placeholder="Resource title"
+                                                disabled={!selection.sectionId}
+                                            />
+                                        </label>
+
+                                        <label>
+                                            <span>Link URL</span>
+                                            <input
+                                                value={link.url}
+                                                onChange={(event) => updateResourceLinkRow(index, 'url', event.target.value)}
+                                                placeholder="https://..."
+                                                disabled={!selection.sectionId}
+                                            />
+                                        </label>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => removeResourceLinkRow(index)}
+                                            disabled={!selection.sectionId}
+                                            className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </form>
 
                     <section className="preview-panel">
@@ -867,7 +952,20 @@ export function AdminCourseBuilder() {
                         <article className="lesson-view__card">
                             <span className="card-kicker">Selected lesson</span>
                             <h4>{selectedLesson?.title || 'No lesson selected'}</h4>
-                            <p>{selectedLesson?.notes || 'Pick a lesson from the tree on the left.'}</p>
+                            {selectedLesson?.resourceLinks.length ? (
+                                <div className="space-y-2">
+                                    <span className="card-kicker">Links</span>
+                                    <ul className="space-y-1">
+                                        {selectedLesson.resourceLinks.map((link) => (
+                                            <li key={`${link.title}-${link.url}`}>
+                                                <a href={link.url} target="_blank" rel="noreferrer" className="text-cyan-300 underline decoration-cyan-300/40 underline-offset-4">
+                                                    {link.title || link.url}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ) : null}
                             {youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ? (
                                 <div className="video-frame">
                                     <iframe
@@ -878,6 +976,8 @@ export function AdminCourseBuilder() {
                                     />
                                 </div>
                             ) : null}
+                            {selectedLesson?.notesTitle ? <h5>{selectedLesson.notesTitle}</h5> : null}
+                            <p>{selectedLesson?.notes || 'Pick a lesson from the tree on the left.'}</p>
                         </article>
                     </section>
                 </div>

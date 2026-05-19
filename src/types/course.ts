@@ -32,7 +32,9 @@ export type LessonRecord = {
     title: string
     youtubeUrl: string
     youtubeVideoId: string
+    notesTitle: string
     notes: string
+    resourceLinks: Array<{ title: string; url: string }>
     order: number
     courseId: string
     sectionId: string
@@ -44,7 +46,9 @@ export type CourseLessonDraft = {
     id: string
     title: string
     youtubeUrl: string
+    notesTitle: string
     notes: string
+    resourceLinks: string[]
 }
 
 export type CourseSectionDraft = {
@@ -88,7 +92,9 @@ export type SectionDraft = {
 export type LessonDraft = {
     title: string
     youtubeUrl: string
+    notesTitle: string
     notes: string
+    resourceLinks: Array<{ id: string; title: string; url: string }>
 }
 
 export type EnrollmentRecord = {

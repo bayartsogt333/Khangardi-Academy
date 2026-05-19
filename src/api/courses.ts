@@ -78,12 +78,20 @@ function normalizeSection(id: string, data: FirestoreSection): SectionRecord {
 }
 
 function normalizeLesson(id: string, data: FirestoreLesson): LessonRecord {
+    const rawLinks = Array.isArray((data as { resourceLinks?: unknown }).resourceLinks)
+        ? ((data as { resourceLinks?: Array<{ title?: string; url?: string } | string> }).resourceLinks ?? [])
+        : []
+
     return {
         id,
         title: data.title,
         youtubeUrl: data.youtubeUrl,
         youtubeVideoId: data.youtubeVideoId,
+        notesTitle: data.notesTitle ?? '',
         notes: data.notes,
+        resourceLinks: rawLinks
+            .map((item) => (typeof item === 'string' ? { title: '', url: item.trim() } : { title: item.title?.trim() || '', url: item.url?.trim() || '' }))
+            .filter((item) => item.url),
         order: data.order,
         courseId: data.courseId,
         sectionId: data.sectionId,
@@ -112,6 +120,12 @@ export function extractYouTubeVideoId(input: string) {
 async function getNextOrder(collectionRef: ReturnType<typeof collection>) {
     const snapshot = await getDocs(collectionRef)
     return snapshot.size + 1
+}
+
+function normalizeResourceLinks(input: Array<{ id: string; title: string; url: string }>) {
+    return input
+        .map((item) => ({ title: item.title.trim(), url: item.url.trim() }))
+        .filter((item) => item.url)
 }
 
 export async function loadAdminCourses(): Promise<CourseRecord[]> {
@@ -295,12 +309,15 @@ export async function reorderSections(courseId: string, orderedSectionIds: strin
 export async function addLesson(courseId: string, sectionId: string, input: LessonDraft) {
     const lessonsRef = collection(db, 'courses', courseId, 'sections', sectionId, 'lessons')
     const nextOrder = await getNextOrder(lessonsRef)
+    const resourceLinks = normalizeResourceLinks(input.resourceLinks)
 
     const lessonDoc = await addDoc(lessonsRef, {
         title: input.title.trim(),
         youtubeUrl: input.youtubeUrl.trim(),
         youtubeVideoId: extractYouTubeVideoId(input.youtubeUrl),
+        notesTitle: input.notesTitle.trim(),
         notes: input.notes.trim(),
+        resourceLinks,
         order: nextOrder,
         courseId,
         sectionId,
@@ -313,11 +330,14 @@ export async function addLesson(courseId: string, sectionId: string, input: Less
 
 export async function updateLesson(courseId: string, sectionId: string, lessonId: string, input: LessonDraft) {
     const lessonRef = doc(db, 'courses', courseId, 'sections', sectionId, 'lessons', lessonId)
+    const resourceLinks = normalizeResourceLinks(input.resourceLinks)
     await updateDoc(lessonRef, {
         title: input.title.trim(),
         youtubeUrl: input.youtubeUrl.trim(),
         youtubeVideoId: extractYouTubeVideoId(input.youtubeUrl),
+        notesTitle: input.notesTitle.trim(),
         notes: input.notes.trim(),
+        resourceLinks,
         updatedAt: serverTimestamp(),
     })
 }

@@ -28,6 +28,7 @@ export function StudentCourseViewer() {
         () => tree.sections.reduce((total, section) => total + section.lessons.length, 0),
         [tree.sections],
     )
+    const initialLoading = loading && !courses.length && !tree.course
 
     const loadViewer = async (preferredCourseId?: string | null) => {
         setLoading(true)
@@ -150,7 +151,7 @@ export function StudentCourseViewer() {
         setSelectedLessonId(lessonId)
     }
 
-    if (loading) {
+    if (initialLoading) {
         return (
             <section className="student-viewer student-viewer--loading">
                 <div className="course-studio-card">
@@ -164,6 +165,11 @@ export function StudentCourseViewer() {
 
     return (
         <section className="student-viewer">
+            {loading ? (
+                <div className="mb-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+                    Loading course content…
+                </div>
+            ) : null}
             <header className="student-viewer__hero">
                 <div>
                     <span className="eyebrow">Learning space</span>
@@ -295,7 +301,20 @@ export function StudentCourseViewer() {
                             <article className="course-studio-card student-lesson-view">
                                 <span className="card-kicker">Lesson</span>
                                 <h3>{selectedLesson?.title || 'Select a lesson'}</h3>
-                                <p>{selectedLesson?.notes || 'Open a lesson to view notes and video playback.'}</p>
+                                {selectedLesson?.resourceLinks.length ? (
+                                    <div className="space-y-2">
+                                        <span className="card-kicker">Links</span>
+                                        <ul className="space-y-1 text-sm">
+                                            {selectedLesson.resourceLinks.map((link) => (
+                                                <li key={`${link.title}-${link.url}`}>
+                                                    <a href={link.url} target="_blank" rel="noreferrer" className="text-cyan-300 underline decoration-cyan-300/40 underline-offset-4">
+                                                        {link.title || link.url}
+                                                    </a>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ) : null}
 
                                 {youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ? (
                                     <div className="video-frame">
@@ -307,6 +326,14 @@ export function StudentCourseViewer() {
                                         />
                                     </div>
                                 ) : null}
+
+                                <div className="space-y-2">
+                                    <span className="card-kicker">Notes</span>
+                                    {selectedLesson?.notesTitle ? (
+                                        <h4 className="text-cyan-100">{selectedLesson.notesTitle}</h4>
+                                    ) : null}
+                                    <p>{selectedLesson?.notes || 'Open a lesson to view notes and video playback.'}</p>
+                                </div>
                             </article>
                         </section>
                     </div>

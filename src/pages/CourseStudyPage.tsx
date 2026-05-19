@@ -44,6 +44,7 @@ export function CourseStudyPage() {
         () => tree.sections.reduce((total, section) => total + section.lessons.length, 0),
         [tree.sections],
     )
+    const initialLoading = loading && !course && !tree.sections.length
 
     const completionPercent = useMemo(() => {
         if (lessonCount === 0) return 0
@@ -194,7 +195,7 @@ export function CourseStudyPage() {
         }
     }
 
-    if (loading) {
+    if (initialLoading) {
         return (
             <main className="min-h-screen bg-slate-950 text-slate-100">
                 <section className="mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8">
@@ -211,6 +212,11 @@ export function CourseStudyPage() {
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+                {loading ? (
+                    <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+                        Loading course content…
+                    </div>
+                ) : null}
                 <header className="rounded-3xl border border-slate-800/80 bg-slate-900/80 p-5 shadow-2xl shadow-black/30 backdrop-blur xl:p-6">
                     <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                         <div className="space-y-2">
@@ -333,7 +339,7 @@ export function CourseStudyPage() {
                             </div>
 
                             <div className="mt-5 space-y-3">
-                                {tree.sections.map((section) => (
+                                {tree.sections.map((section, sectionIndex) => (
                                     <div key={section.id} className="space-y-2">
                                         <button
                                             type="button"
@@ -347,7 +353,7 @@ export function CourseStudyPage() {
                                                 }`}
                                         >
                                             <div>
-                                                <div className="font-semibold text-white">{section.title}</div>
+                                                <div className="font-semibold text-white">{sectionIndex + 1}. {section.title}</div>
                                                 <div className="text-sm text-slate-400">
                                                     {section.description || 'Section overview'}
                                                 </div>
@@ -359,25 +365,23 @@ export function CourseStudyPage() {
 
                                         {section.id === selectedSectionId ? (
                                             <div className="space-y-2 pl-4">
-                                                {section.lessons.map((lesson) => (
+                                                {section.lessons.map((lesson, lessonIndex) => (
                                                     <button
                                                         key={lesson.id}
                                                         type="button"
                                                         onClick={() => setSelectedLessonId(lesson.id)}
                                                         className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${lesson.id === selectedLessonId
                                                             ? 'border-indigo-400/40 bg-indigo-400/10 text-white'
-                                                            : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
+                                                            : completedLessonIds.includes(lesson.id)
+                                                                ? 'border-emerald-400/25 bg-emerald-400/8 text-emerald-50 hover:border-emerald-300/40'
+                                                                : 'border-slate-800 bg-slate-950/70 text-slate-100 hover:border-slate-700'
                                                             }`}
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            {completedLessonIds.includes(lesson.id) ? (
-                                                                <span className="text-emerald-300">✓</span>
-                                                            ) : (
-                                                                <span className="w-4" />
-                                                            )}
-                                                            <span className="font-medium text-white">{lesson.title}</span>
+                                                            <span className={`w-8 text-xs font-semibold ${completedLessonIds.includes(lesson.id) ? 'text-emerald-300' : 'text-slate-400'}`}>{lessonIndex + 1}.</span>
+                                                            <span className={`font-medium ${completedLessonIds.includes(lesson.id) ? 'text-emerald-100' : 'text-white'}`}>{lesson.title}</span>
                                                         </div>
-                                                        <small className="text-xs uppercase tracking-[0.24em] text-slate-500">Open</small>
+                                                        <small className={`text-xs uppercase tracking-[0.24em] ${completedLessonIds.includes(lesson.id) ? 'text-emerald-200' : 'text-slate-500'}`}>Open</small>
                                                     </button>
                                                 ))}
                                             </div>
@@ -397,9 +401,20 @@ export function CourseStudyPage() {
                                         <h2 className="text-3xl font-semibold text-white">
                                             {selectedLesson?.title || 'Pick a lesson'}
                                         </h2>
-                                        <p className="max-w-3xl text-sm leading-7 text-slate-300">
-                                            {selectedLesson?.notes || 'Choose a lesson from the section list to see notes and video.'}
-                                        </p>
+                                        {selectedLesson?.resourceLinks.length ? (
+                                            <div className="space-y-2">
+                                                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Links</div>
+                                                <ul className="space-y-1 text-sm">
+                                                    {selectedLesson.resourceLinks.map((link) => (
+                                                        <li key={`${link.title}-${link.url}`}>
+                                                            <a href={link.url} target="_blank" rel="noreferrer" className="text-cyan-300 underline decoration-cyan-300/40 underline-offset-4">
+                                                                {link.title || link.url}
+                                                            </a>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ) : null}
                                         {lessonCount > 0 ? (
                                             <div className="mt-3 w-full max-w-md">
                                                 <div className="mb-1 text-xs text-slate-400">Progress — {completionPercent}%</div>
@@ -442,6 +457,20 @@ export function CourseStudyPage() {
                                 )}
                             </article>
 
+                            <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20">
+                                <div className="space-y-3">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
+                                        Notes
+                                    </span>
+                                    {selectedLesson?.notesTitle ? (
+                                        <h3 className="text-lg font-semibold text-cyan-100">{selectedLesson.notesTitle}</h3>
+                                    ) : null}
+                                    <p className="max-w-3xl text-sm leading-7 text-slate-300">
+                                        {selectedLesson?.notes || 'Choose a lesson from the section list to see notes and video.'}
+                                    </p>
+                                </div>
+                            </article>
+
                             <div className="flex flex-wrap gap-3">
                                 {profile?.role !== 'admin' && selectedLesson ? (
                                     <button
@@ -451,12 +480,6 @@ export function CourseStudyPage() {
                                     >
                                         {selectedLessonCompleted ? 'Mark incomplete' : 'Mark complete'}
                                     </button>
-                                ) : null}
-
-                                {selectedLessonCompleted ? (
-                                    <span className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-medium text-emerald-100">
-                                        Completed
-                                    </span>
                                 ) : null}
                             </div>
                         </section>

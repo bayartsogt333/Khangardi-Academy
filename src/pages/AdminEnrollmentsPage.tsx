@@ -57,7 +57,7 @@ export function AdminEnrollmentsPage() {
                     if (cancelled) return
 
                     const courseEnrollments = snapshot.docs.map((docItem) => ({
-                        
+
                         ...(docItem.data() as EnrollmentRecord), id: docItem.id,
                     })) as EnrollmentRecord[]
 
@@ -187,20 +187,28 @@ export function AdminEnrollmentsPage() {
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold text-white">Pending requests</h2>
                             {enrollments.filter((e) => e.status === 'pending').length ? (
-                                <ul className="space-y-2">
+                                <ul className="space-y-3">
                                     {enrollments
                                         .filter((e) => e.status === 'pending')
                                         .map((item) => (
-                                            <li key={`${item.courseId}:${item.userId}`} className="flex items-center justify-between gap-3">
-                                                <div className="text-sm text-slate-200">
-                                                    • {item.displayName || item.email || item.userId}
-                                                    <span className="ml-2 text-xs text-slate-400">requested</span>
-                                                    <span className="mx-2 text-xs text-slate-300">{courses.find(c => c.id === item.courseId)?.title || item.courseId}</span>
-                                                </div>
+                                            <li key={`${item.courseId}:${item.userId}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/10 transition hover:border-slate-700">
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="text-sm font-semibold text-white">{item.displayName || item.email || item.userId}</span>
+                                                            <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.24em] text-cyan-200">
+                                                                Pending
+                                                            </span>
+                                                        </div>
+                                                        <div className="mt-1 text-sm text-slate-400">
+                                                            requested access to <span className="text-slate-200">{courses.find(c => c.id === item.courseId)?.title || item.courseId}</span>
+                                                        </div>
+                                                    </div>
 
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => handleApprove(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400 px-3 py-1 text-xs font-semibold text-slate-950">{busyId === `${item.courseId}:${item.userId}` ? '…' : 'Approve'}</button>
-                                                    <button onClick={() => handleReject(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100">Reject</button>
+                                                    <div className="flex gap-2 self-start sm:self-center">
+                                                        <button onClick={() => handleApprove(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400 px-3 py-1 text-xs font-semibold text-slate-950">{busyId === `${item.courseId}:${item.userId}` ? '…' : 'Approve'}</button>
+                                                        <button onClick={() => handleReject(item.courseId, item.userId)} disabled={busyId === `${item.courseId}:${item.userId}`} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-100">Reject</button>
+                                                    </div>
                                                 </div>
                                             </li>
                                         ))}
