@@ -362,7 +362,7 @@ export function CourseStudyPage() {
                                                                     <CheckGlyph />
                                                                 </span>
                                                             ) : (
-                                                                'Open'
+                                                                ''
                                                             )}
                                                         </small>
                                                     </button>

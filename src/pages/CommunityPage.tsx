@@ -57,6 +57,7 @@ export function CommunityPage() {
 
     const canDeletePost = (post: any) => !!profile && (profile.role === 'admin' || profile.uid === post.authorId)
     const canDeleteComment = (c: any) => !!profile && (profile.role === 'admin' || profile.uid === c.authorId)
+    const isCurrentUser = useCallback((authorId: string) => !!profile?.uid && authorId === profile.uid, [profile?.uid])
 
     const isLikedByUser = useCallback(
         (likes: string[] | undefined) => !!profile?.uid && Array.isArray(likes) && likes.includes(profile.uid),
@@ -179,7 +180,7 @@ export function CommunityPage() {
                                         posts.map((post) => (
                                             <article
                                                 key={post.id}
-                                                className="rounded-[28px] border border-slate-700/80 bg-slate-950/70 p-5 shadow-[0_18px_48px_rgba(0,0,0,0.28)] transition hover:-translate-y-0.5 hover:border-cyan-400/30 hover:shadow-[0_24px_60px_rgba(0,0,0,0.34)]"
+                                                className="rounded-[28px] border border-slate-700/80 bg-slate-950/70 p-5 shadow-[0_18px_48px_rgba(0,0,0,0.28)] transition duration-200 hover:-translate-y-1 hover:border-cyan-400/30 hover:shadow-[0_28px_70px_rgba(0,0,0,0.38)]"
                                             >
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="flex min-w-0 flex-1 gap-3">
@@ -189,6 +190,11 @@ export function CommunityPage() {
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                                                 <div className="truncate font-semibold text-white">{post.authorName}</div>
+                                                                {isCurrentUser(post.authorId) ? (
+                                                                    <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[11px] font-semibold text-cyan-300">
+                                                                        You
+                                                                    </span>
+                                                                ) : null}
                                                                 <span className="text-xs text-slate-500">•</span>
                                                                 <div className="text-xs text-slate-400">{formatTime(post.createdAt)}</div>
                                                             </div>
@@ -212,7 +218,7 @@ export function CommunityPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleToggleLike(post)}
-                                                        className="inline-flex items-center gap-2 rounded-full px-1 py-0.5 text-slate-300 transition hover:text-rose-300"
+                                                        className="inline-flex items-center gap-2 rounded-full px-1 py-0.5 text-slate-300 transition duration-200 hover:-translate-y-0.5 hover:text-rose-300"
                                                         aria-label="Like post"
                                                     >
                                                         <Heart
@@ -224,7 +230,7 @@ export function CommunityPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setOpenRepliesByPost((cur) => ({ ...cur, [post.id]: !cur[post.id] }))}
-                                                        className="inline-flex items-center gap-2 rounded-full px-1 py-0.5 text-slate-300 transition hover:text-cyan-300"
+                                                        className="inline-flex items-center gap-2 rounded-full px-1 py-0.5 text-slate-300 transition duration-200 hover:-translate-y-0.5 hover:text-cyan-300"
                                                     >
                                                         <MessageCircle className="h-4 w-4 text-slate-400" />
                                                         <span>{(commentsByPost[post.id] || []).length}</span>
@@ -246,15 +252,20 @@ export function CommunityPage() {
                                                         </div>
 
                                                         {(commentsByPost[post.id] || []).map((c) => (
-                                                            <div key={c.id} className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-3">
+                                                            <div key={c.id} className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-3 transition duration-200 hover:border-slate-700 hover:bg-slate-900/90">
                                                                 <div className="flex items-start justify-between gap-3">
                                                                     <div className="flex min-w-0 items-start gap-3">
                                                                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold text-white">
                                                                             {(c.authorName || 'U').split(' ').map((s: string) => s[0]).slice(0, 2).join('')}
                                                                         </div>
                                                                         <div className="min-w-0">
-                                                                            <div className="flex items-center gap-2">
+                                                                            <div className="flex flex-wrap items-center gap-2">
                                                                                 <div className="truncate font-medium text-white">{c.authorName}</div>
+                                                                                {isCurrentUser(c.authorId) ? (
+                                                                                    <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-300">
+                                                                                        You
+                                                                                    </span>
+                                                                                ) : null}
                                                                                 <span className="text-xs text-slate-500">•</span>
                                                                                 <div className="text-xs text-slate-400">{formatTime(c.createdAt)}</div>
                                                                             </div>
@@ -263,7 +274,7 @@ export function CommunityPage() {
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => handleToggleCommentLike(post.id, c)}
-                                                                                    className="inline-flex items-center gap-2 transition hover:text-rose-300"
+                                                                                    className="inline-flex items-center gap-2 transition duration-200 hover:-translate-y-0.5 hover:text-rose-300"
                                                                                     aria-label="Like comment"
                                                                                 >
                                                                                     <Heart
@@ -332,12 +343,20 @@ export function CommunityPage() {
 
                             <div className="mt-4 flex flex-col gap-2.5">
                                 {activeAuthors.length ? activeAuthors.map((a) => (
-                                    <div key={a.id} className="flex items-center gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/70 px-3 py-2.5">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold text-white">
+                                    <div key={a.id} className="flex items-center gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/70 px-3 py-2.5 transition duration-200 hover:-translate-y-0.5 hover:border-emerald-400/30 hover:bg-slate-900/90">
+                                        <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-indigo-400 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/15">
                                             {a.name.split(' ').map((s) => s[0]).slice(0, 2).join('')}
+                                            <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-slate-950 bg-emerald-400 shadow-[0_0_0_4px_rgba(74,222,128,0.15)]" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <div className="truncate text-sm font-medium text-white">{a.name}</div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <div className="truncate text-sm font-medium text-white">{a.name}</div>
+                                                {isCurrentUser(a.id) ? (
+                                                    <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-300">
+                                                        You
+                                                    </span>
+                                                ) : null}
+                                            </div>
                                             <div className="mt-0.5 flex items-center gap-1.5 text-xs text-emerald-300">
                                                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                                                 Active
