@@ -4,7 +4,6 @@ import { loadPublishedCourses } from '../api/courses'
 import { useAuth } from '../context/AuthContext'
 import type { CourseRecord } from '../types/course'
 import SiteHeader from '../components/SiteHeader'
-import { BookOpen } from 'lucide-react'
 
 export function LearningHomePage() {
     const { logout, profile } = useAuth()
