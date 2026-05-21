@@ -479,13 +479,16 @@ export function CourseStudyPage() {
                             <div className="mt-4 rounded-2xl border border-cyan-400/25 bg-slate-950/70 p-4">
                                 <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-200">
                                     <span className="font-medium">Явц</span>
-                                    <span className="text-base font-bold text-cyan-200">{completionPercent}%</span>
+                                    <span className="text-xs text-slate-400">{completedLessonIds.length}/{lessonCount} хичээл</span>
                                 </div>
-                                <div className="relative h-4 overflow-hidden rounded-full bg-slate-800 ring-1 ring-white/10">
+                                <div className="relative h-5 overflow-hidden rounded-full bg-slate-800 ring-1 ring-white/10">
                                     <div
-                                        className="absolute left-0 top-0 h-4 rounded-full bg-linear-to-r from-emerald-300 via-cyan-300 to-indigo-400 transition-[width] duration-700 ease-out"
+                                        className="absolute left-0 top-0 h-5 rounded-full bg-linear-to-r from-emerald-300 via-cyan-300 to-indigo-400 transition-[width] duration-700 ease-out"
                                         style={{ width: `${completionPercent}%` }}
                                     />
+                                    <div className="absolute inset-0 flex items-center justify-center text-xs font-bold tracking-[0.12em] text-white drop-shadow-[0_1px_2px_rgba(2,6,23,0.95)]">
+                                        {completionPercent}%
+                                    </div>
                                 </div>
                             </div>
 

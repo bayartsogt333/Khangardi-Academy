@@ -144,7 +144,7 @@ export function LearningHomePage() {
                                     <div className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300">
                                         <span className="inline-flex items-center gap-2">
                                             {openCourseId === course.id ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
-                                            <span>Хичээл нээх</span>
+                                            <span>Сургалт үзэх</span>
                                         </span>
                                     </div>
                                 </div>

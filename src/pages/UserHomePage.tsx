@@ -68,28 +68,11 @@ export function UserHomePage() {
     // const isClassroom = pathname.startsWith('/class') || pathname.startsWith('/learn')
     // const isCommunity = pathname.startsWith('/community')
 
-    const stats = useMemo(
-        () => [
-            { label: 'Нийтлэгдсэн хичээл', value: courses.length },
-            { label: 'Нүүр хуудсан дахь онцлох', value: featuredCourses.length },
-            { label: 'Идэвхтэй орчин', value: profile?.role === 'admin' ? 'Админ + сургалтын орчин' : 'Сурагч' },
-        ],
-        [courses.length, featuredCourses.length, profile?.role],
-    )
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
                 <SiteHeader profile={profile} onLogout={logout} />
-
-                <div className="grid gap-4 p-5 sm:grid-cols-3 sm:p-6">
-                    {stats.map((item) => (
-                        <article key={item.label} className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-xl shadow-black/20">
-                            <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">{item.label}</div>
-                            <div className="mt-3 text-3xl font-semibold text-white">{item.value}</div>
-                        </article>
-                    ))}
-                </div>
 
                 {error ? (
                     <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
@@ -122,7 +105,7 @@ export function UserHomePage() {
                             ) : featuredCourses.length ? (
                                 featuredCourses.map((course) => (
                                     <div key={course.id} className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/70">
-                                        <div className="relative aspect-[16/9] bg-slate-950">
+                                        <div className="relative aspect-video bg-slate-950">
                                             {course.thumbnailURL ? (
                                                 <img src={course.thumbnailURL} alt={course.title} className="h-full w-full object-cover" />
                                             ) : (
@@ -137,7 +120,7 @@ export function UserHomePage() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleNavigate('classroom')}
-                                                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
+                                                className="inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
                                             >
                                                 <span>Сургалт руу очих</span>
                                             </button>
@@ -164,7 +147,7 @@ export function UserHomePage() {
                                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
                             >
                                 <ArrowIcon />
-                                <span>Хамт олон руу</span>
+                                <span>Хамт олон</span>
                             </button>
                         </div>
 
