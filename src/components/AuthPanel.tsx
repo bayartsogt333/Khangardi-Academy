@@ -88,37 +88,13 @@ export function AuthPanel() {
 
     return (
         <section className="auth-shell">
-            <div className="auth-copy">
-                <span className="eyebrow">Khangardi Academy</span>
-                <h1>Classroom, community, and admin control in one secure auth flow.</h1>
-                <p className="lede">
-                    Firebase Auth, Firestore profiles, and storage-ready foundations for your private
-                    learning platform.
-                </p>
-
-                <div className="feature-grid">
-                    <article>
-                        <strong>Admin / User roles</strong>
-                        <p>Role is read from Firestore so admin access stays controlled by data.</p>
-                    </article>
-                    <article>
-                        <strong>Community ready</strong>
-                        <p>Posts, comments, and feed logic can plug into the authenticated shell next.</p>
-                    </article>
-                    <article>
-                        <strong>Classroom ready</strong>
-                        <p>Course access and enrollment checks can reuse the same profile document.</p>
-                    </article>
-                </div>
-            </div>
-
             <div className="auth-card">
                 <div className="auth-card__header">
-                    <div>
-                        <span className="card-kicker">Access</span>
+                    <div className="auth-card__brand">
+                        <span className="eyebrow">Khangardi Academy</span>
                         <h2>{title}</h2>
                     </div>
-                    <div className="mode-switch" role="tablist" aria-label="Authentication mode">
+                    <div className="mode-switch" role="tablist" aria-label="Нэвтрэх горим">
                         <button
                             type="button"
                             className={mode === 'login' ? 'active' : ''}
@@ -205,7 +181,7 @@ export function AuthPanel() {
                     </button>
 
                     <button type="button" className="link-button" onClick={handleResetPassword} disabled={busy}>
-                        Нууц үгээ мартсан
+                        Нууц үг сэргээх
                     </button>
                 </form>
             </div>

@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import Snowfall from './Snowfall'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Snowflake } from 'lucide-react'
+import { ArrowLeft, Snowflake } from 'lucide-react'
 import type { UserProfile } from '../types/auth'
 
 type SiteHeaderProps = {
@@ -15,18 +15,23 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
     const pathname = location.pathname
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-    const isHome = pathname === '/'
+    const isHome = pathname === '/' || pathname === '/home'
     const isClassroom = pathname.startsWith('/class') || pathname.startsWith('/learn')
     const isCommunity = pathname.startsWith('/community')
     const isAdmin = pathname.startsWith('/admin')
+    const isLessonPage = /^\/learn\/[^/]+\/lessons\/[^/]+$/.test(pathname)
 
-    const displayName = profile?.displayName || 'Member'
+    const displayName = profile?.displayName || 'Гишүүн'
     const initials = useMemo(() => displayName.split(' ').map((s) => s[0]).slice(0, 2).join(''), [displayName])
 
     const goHome = useCallback(() => navigate('/'), [navigate])
     const goClassroom = useCallback(() => navigate('/classroom'), [navigate])
     const goCommunity = useCallback(() => navigate('/community'), [navigate])
     const goAdmin = useCallback(() => navigate('/admin'), [navigate])
+    const goBackFromLesson = useCallback(() => {
+        const match = pathname.match(/^\/learn\/([^/]+)\/lessons\/[^/]+$/)
+        navigate(match ? `/learn/${match[1]}` : '/classroom')
+    }, [navigate, pathname])
     const toggleMobileMenu = useCallback(() => setMobileMenuOpen((current) => !current), [])
     const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), [])
     const toggleSnowfall = useCallback(() => setSnowfallEnabled((current) => !current), [])
@@ -55,34 +60,51 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
             {snowfallEnabled ? <Snowfall /> : null}
             <header className="relative z-10 rounded-3xl border border-slate-800/80 bg-slate-900/80 p-5 shadow-2xl shadow-black/30 backdrop-blur xl:p-6">
                 <div className="flex items-center justify-between gap-4 lg:hidden">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-400 text-lg font-black text-slate-950">
-                            {initials}
+                    {isLessonPage ? (
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={goBackFromLesson}
+                                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 text-slate-100 transition hover:border-cyan-400/60 hover:text-white"
+                                aria-label="Буцах"
+                                title="Буцах"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </button>
+                            <button type="button" onClick={goHome} className="space-y-1 text-left">
+                                <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Khangardi Academy</div>
+                            </button>
                         </div>
-                        <div className="space-y-1">
-                            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Khangardi Academy</div>
-                            <div className="text-lg font-semibold text-white">Welcome, {displayName}</div>
-                        </div>
-                    </div>
+                    ) : (
+                        <button type="button" onClick={goHome} className="flex items-center gap-4 text-left">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-cyan-400 to-indigo-400 text-lg font-black text-slate-950">
+                                {initials}
+                            </div>
+                            <div className="space-y-1">
+                                <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Khangardi Academy</div>
+                                <div className="text-lg font-semibold text-white">Тавтай морил, {displayName}</div>
+                            </div>
+                        </button>
+                    )}
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={toggleSnowfall}
                             aria-pressed={snowfallEnabled}
-                            title={snowfallEnabled ? 'Disable winter mode' : 'Enable winter mode'}
+                            title={snowfallEnabled ? 'Цастай горим унтраах' : 'Цастай горим асаах'}
                             className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition ${snowfallEnabled ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
                         >
                             <Snowflake className={`h-4 w-4 ${snowfallEnabled ? 'animate-pulse text-cyan-200' : 'text-slate-400'}`} />
-                            <span className="hidden sm:inline">Winter mode</span>
+                            <span className="hidden sm:inline">Цастай горим</span>
                         </button>
                         <button
                             type="button"
                             onClick={toggleMobileMenu}
                             className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400/60 hover:text-white"
                             aria-expanded={mobileMenuOpen}
-                            aria-label="Toggle navigation menu"
+                            aria-label="Цэсийг асаах эсвэл хаах"
                         >
-                            {mobileMenuOpen ? 'Close' : 'Menu'}
+                            {mobileMenuOpen ? 'Хаах' : 'Цэс'}
                         </button>
                     </div>
                 </div>
@@ -97,34 +119,34 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                                 <button
                                     type="button"
                                     onClick={goHome}
-                                    className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isHome ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
+                                    className={`nav-button px-4 py-3 text-sm font-medium ${isHome ? 'active' : ''}`}
                                 >
-                                    Home
+                                    Нүүр
                                 </button>
 
                                 <button
                                     type="button"
                                     onClick={goClassroom}
-                                    className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${isClassroom ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
+                                    className={`nav-button px-4 py-3 text-sm font-semibold ${isClassroom ? 'active' : ''}`}
                                 >
-                                    Classroom
+                                    Сургалт
                                 </button>
 
                                 <button
                                     type="button"
                                     onClick={goCommunity}
-                                    className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isCommunity ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
+                                    className={`nav-button px-4 py-3 text-sm font-medium ${isCommunity ? 'active' : ''}`}
                                 >
-                                    Community
+                                    Хамт олон
                                 </button>
 
                                 {profile?.role === 'admin' ? (
                                     <button
                                         type="button"
                                         onClick={goAdmin}
-                                        className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isAdmin ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:border-cyan-400/60 hover:text-white'}`}
+                                        className={`nav-button px-4 py-3 text-sm font-medium ${isAdmin ? 'active' : ''}`}
                                     >
-                                        Admin
+                                        Админ
                                     </button>
                                 ) : null}
 
@@ -133,7 +155,7 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                                     onClick={onLogout}
                                     className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-cyan-400/60 hover:text-white"
                                 >
-                                    Logout
+                                    Гарах
                                 </button>
                             </div>
                         </div>
@@ -141,57 +163,75 @@ export function SiteHeader({ profile, onLogout }: SiteHeaderProps) {
                 </div>
 
                 <div className="hidden flex-col gap-5 lg:flex lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-400 text-lg font-black text-slate-950">
-                            {initials}
+                    {isLessonPage ? (
+                        <div className="flex items-center gap-4">
+                            <button
+                                type="button"
+                                onClick={goBackFromLesson}
+                                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 text-slate-100 transition hover:border-cyan-400/60 hover:text-white"
+                                aria-label="Буцах"
+                                title="Буцах"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </button>
+                            <button type="button" onClick={goHome} className="space-y-1 text-left">
+                                <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Khangardi Academy</div>
+                                <div className="text-sm font-medium text-slate-300">Хичээлээс буцах</div>
+                            </button>
                         </div>
-                        <div className="space-y-1">
-                            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Khangardi Academy</div>
-                            <div className="text-lg font-semibold text-white">Welcome, {displayName}</div>
-                        </div>
-                    </div>
+                    ) : (
+                        <button type="button" onClick={goHome} className="flex items-center gap-4 text-left">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-cyan-400 to-indigo-400 text-lg font-black text-slate-950">
+                                {initials}
+                            </div>
+                            <div className="space-y-1">
+                                <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Khangardi Academy</div>
+                                <div className="text-lg font-semibold text-white">Тавтай морил, {displayName}</div>
+                            </div>
+                        </button>
+                    )}
 
                     <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:flex-row sm:items-center">
                         <button
                             type="button"
                             onClick={goHome}
-                            className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isHome ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white'}`}
+                            className={`nav-button px-4 py-3 text-sm font-medium ${isHome ? 'active' : ''}`}
                         >
-                            Home
+                            Нүүр
                         </button>
 
                         <button
                             type="button"
                             onClick={goClassroom}
-                            className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${isClassroom ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white'}`}
+                            className={`nav-button px-4 py-3 text-sm font-semibold ${isClassroom ? 'active' : ''}`}
                         >
-                            Classroom
+                            Сургалт
                         </button>
 
                         <button
                             type="button"
                             onClick={goCommunity}
-                            className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isCommunity ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white'}`}
+                            className={`nav-button px-4 py-3 text-sm font-medium ${isCommunity ? 'active' : ''}`}
                         >
-                            Community
+                            Хамт олон
                         </button>
 
                         {profile?.role === 'admin' ? (
                             <button
                                 type="button"
                                 onClick={goAdmin}
-                                className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${isAdmin ? 'border-cyan-400/60 bg-cyan-400/10 text-white' : 'border border-slate-700 bg-slate-900 text-slate-100 hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white'}`}
+                                className={`nav-button px-4 py-3 text-sm font-medium ${isAdmin ? 'active' : ''}`}
                             >
-                                Admin
+                                Админ
                             </button>
                         ) : null}
 
                         <button
                             type="button"
                             onClick={onLogout}
-                            className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
+                            className={`nav-button px-4 py-3 text-sm font-medium`}
                         >
-                            Logout
+                            Гарах
                         </button>
                         <button
                             type="button"

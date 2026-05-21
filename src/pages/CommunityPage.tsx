@@ -269,7 +269,7 @@ export function CommunityPage() {
 
         setGroupSaving(true)
         try {
-            const newGroupId = await createGroup(title, description || 'Community discussion group', profile.uid, restrictToCourse ? selectedCourseForGroup ?? undefined : undefined)
+            const newGroupId = await createGroup(title, description || 'Хамтын орчны хэлэлцүүлгийн бүлэг', profile.uid, restrictToCourse ? selectedCourseForGroup ?? undefined : undefined)
             // upload cover if provided
             if (groupCoverFile) {
                 try {
@@ -312,7 +312,7 @@ export function CommunityPage() {
 
         setGroupActionId(editingGroupId)
         try {
-            await updateGroup(editingGroupId, title, description || 'Community discussion group')
+            await updateGroup(editingGroupId, title, description || 'Хамтын орчны хэлэлцүүлгийн бүлэг')
             if (editCoverFile) {
                 try {
                     // Use replaceGroupCover so the previous Storage file is deleted
@@ -413,7 +413,7 @@ export function CommunityPage() {
         [isLikedByUser, profile],
     )
 
-    const groupKindLabel = selectedGroup?.kind === 'course' ? 'Course group' : selectedGroup?.kind === 'custom' ? 'Custom group' : 'General space'
+    const groupKindLabel = selectedGroup?.kind === 'course' ? 'Хичээлийн бүлэг' : selectedGroup?.kind === 'custom' ? 'Тусгай бүлэг' : 'Ерөнхий орон зай'
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -425,15 +425,15 @@ export function CommunityPage() {
                         <div className="rounded-[28px] border border-slate-800/80 bg-slate-900/80 p-5 shadow-[0_18px_48px_rgba(0,0,0,0.25)] backdrop-blur">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Community spaces</div>
-                                    <h2 className="mt-2 text-2xl font-semibold text-white">Pick a group</h2>
+                                    <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Community орон зай</div>
+                                    <h2 className="mt-2 text-2xl font-semibold text-white">Бүлэг сонго</h2>
                                 </div>
                                 <Hash className="h-5 w-5 text-cyan-300" />
                             </div>
 
                             <div className="mt-4 space-y-3">
                                 {groupsLoading ? (
-                                    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-400">Loading groups…</div>
+                                    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-400">Бүлгүүдийг ачаалж байна…</div>
                                 ) : null}
 
                                 {groups.map((group) => {
@@ -502,7 +502,7 @@ export function CommunityPage() {
                                                                 className="inline-flex items-center gap-1 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
                                                             >
                                                                 <Edit3 className="h-3.5 w-3.5" />
-                                                                Edit
+                                                                Засах
                                                             </button>
                                                             <button
                                                                 type="button"
@@ -510,7 +510,7 @@ export function CommunityPage() {
                                                                 disabled={groupActionId === group.id}
                                                                 className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-400/40 disabled:cursor-not-allowed disabled:opacity-60"
                                                             >
-                                                                Delete
+                                                                Устгах
                                                             </button>
                                                         </>
                                                     ) : null}
@@ -532,14 +532,14 @@ export function CommunityPage() {
                                                             className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                                                         />
                                                         <div onClick={(e) => e.stopPropagation()}>
-                                                            <label className="text-xs text-slate-400">Replace cover (optional)</label>
+                                                            <label className="text-xs text-slate-400">Ковер солих (сонголттой)</label>
                                                             <label className="mt-2 flex cursor-pointer items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-900 px-3 py-2 transition hover:border-slate-600" htmlFor={`edit-cover-${group.id}`}>
                                                                 {editCoverPreview ? (
                                                                     <img src={editCoverPreview} alt="preview" className="h-12 w-12 rounded-md object-cover" />
                                                                 ) : (
-                                                                    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-sm text-slate-500">Cover</div>
+                                                                    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-sm text-slate-500">Ковер</div>
                                                                 )}
-                                                                <div className="flex-1 text-sm text-slate-200">Click to choose a new cover image (optional)</div>
+                                                                <div className="flex-1 text-sm text-slate-200">Дарж шинэ ковер зураг сонгох (сонголттой)</div>
                                                                 <input
                                                                     id={`edit-cover-${group.id}`}
                                                                     type="file"
@@ -556,7 +556,7 @@ export function CommunityPage() {
                                                                 disabled={groupActionId === group.id || !editGroupTitleDraft.trim()}
                                                                 className="rounded-xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-3 py-2 text-xs font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
                                                             >
-                                                                {groupActionId === group.id ? 'Saving…' : 'Save'}
+                                                                {groupActionId === group.id ? 'Хадгалж байна…' : 'Хадгалах'}
                                                             </button>
                                                             <button
                                                                 type="button"
@@ -564,7 +564,7 @@ export function CommunityPage() {
                                                                 disabled={groupActionId === group.id}
                                                                 className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                                                             >
-                                                                Cancel
+                                                                Цуцлах
                                                             </button>
                                                         </div>
                                                     </div>
@@ -580,8 +580,8 @@ export function CommunityPage() {
                             <div className="rounded-[28px] border border-slate-800/80 bg-slate-900/80 p-5 shadow-[0_18px_48px_rgba(0,0,0,0.25)] backdrop-blur">
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
-                                        <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Admin tools</div>
-                                        <h3 className="mt-2 text-xl font-semibold text-white">Create a group</h3>
+                                        <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Админ хэрэгсэл</div>
+                                        <h3 className="mt-2 text-xl font-semibold text-white">Бүлэг үүсгэх</h3>
                                     </div>
                                     <Plus className="h-5 w-5 text-cyan-300" />
                                 </div>
@@ -589,13 +589,13 @@ export function CommunityPage() {
                                 <div className="mt-4 space-y-3">
                                     <div className="flex items-center gap-3">
                                         <input id="restrict-to-course" type="checkbox" checked={restrictToCourse} onChange={(e) => { setRestrictToCourse(e.target.checked); if (!e.target.checked) setSelectedCourseForGroup(null) }} className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-cyan-400" />
-                                        <label htmlFor="restrict-to-course" className="text-sm text-slate-200">Restrict group to a published course</label>
+                                        <label htmlFor="restrict-to-course" className="text-sm text-slate-200">Бүлгийг нийтлэгдсэн хичээлтэй холбох</label>
                                     </div>
                                     {restrictToCourse ? (
                                         <div>
-                                            <label className="sr-only">Select course</label>
+                                            <label className="sr-only">Хичээл сонго</label>
                                             <select value={selectedCourseForGroup ?? ''} onChange={(e) => setSelectedCourseForGroup(e.target.value || null)} className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-100">
-                                                <option value="">Choose a course (required)</option>
+                                                <option value="">Хичээл сонгох (шаардлагатай)</option>
                                                 {publishedCourses.map((c) => (
                                                     <option key={c.id} value={c.id}>{c.title}</option>
                                                 ))}
@@ -605,25 +605,25 @@ export function CommunityPage() {
                                     <input
                                         value={groupTitleDraft}
                                         onChange={(event) => setGroupTitleDraft(event.target.value)}
-                                        placeholder="Group title"
+                                        placeholder="Бүлгийн нэр"
                                         className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                                     />
                                     <textarea
                                         value={groupDescriptionDraft}
                                         onChange={(event) => setGroupDescriptionDraft(event.target.value)}
-                                        placeholder="Group description"
+                                        placeholder="Бүлгийн тайлбар"
                                         rows={4}
                                         className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                                     />
                                     <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                                        <label className="text-xs text-slate-400">Cover image (optional)</label>
+                                        <label className="text-xs text-slate-400">Ковер зураг (сонголттой)</label>
                                         <label className="mt-2 flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-700/60 bg-slate-950/70 px-3 py-2 transition hover:border-slate-600" htmlFor="create-cover">
                                             {groupCoverPreview ? (
                                                 <img src={groupCoverPreview} alt="preview" className="h-12 w-12 rounded-md object-cover" />
                                             ) : (
-                                                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-sm text-slate-500">Cover</div>
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-sm text-slate-500">Ковер</div>
                                             )}
-                                            <div className="flex-1 text-sm text-slate-200">Choose a cover image (optional)</div>
+                                            <div className="flex-1 text-sm text-slate-200">Ковер зураг сонгох (сонголттой)</div>
                                             <input
                                                 id="create-cover"
                                                 type="file"
@@ -640,7 +640,7 @@ export function CommunityPage() {
                                         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Plus className="h-4 w-4" />
-                                        {groupSaving ? 'Creating…' : 'Add group'}
+                                        {groupSaving ? 'Үүсгэж байна…' : 'Бүлэг нэмэх'}
                                     </button>
                                 </div>
                             </div>
@@ -651,9 +651,9 @@ export function CommunityPage() {
                         <section className="rounded-[32px] border border-slate-800/80 bg-slate-900/80 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.35)] backdrop-blur">
                             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                                 <div className="space-y-3">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now posting in</span>
+                                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Одоо нийтэлж буй бүлэг</span>
                                     <h1 className="text-3xl font-semibold text-white">{selectedGroup?.title || 'General'}</h1>
-                                    <p className="max-w-3xl text-sm leading-7 text-slate-300">{selectedGroup?.description || 'Choose a group from the left to see posts and comments here.'}</p>
+                                    <p className="max-w-3xl text-sm leading-7 text-slate-300">{selectedGroup?.description || 'Зүүн талын жагсаалтаас бүлэг сонгож пост, сэтгэгдлээ үзнэ үү.'}</p>
                                 </div>
 
                                 <div className="flex flex-wrap gap-2 text-xs text-slate-300">
@@ -667,8 +667,8 @@ export function CommunityPage() {
                         <section className="rounded-[32px] border border-slate-800/80 bg-slate-900/80 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.35)] backdrop-blur">
                             <div className="flex items-center justify-between gap-4">
                                 <div>
-                                    <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Create post</div>
-                                    <h2 className="mt-2 text-2xl font-semibold text-white">Share with {selectedGroup?.title || 'the community'}</h2>
+                                    <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Пост үүсгэх</div>
+                                    <h2 className="mt-2 text-2xl font-semibold text-white">{selectedGroup?.title || 'хамт олон'}-той хуваалцах</h2>
                                 </div>
                                 <MessageCircle className="h-5 w-5 text-cyan-300" />
                             </div>
@@ -677,19 +677,19 @@ export function CommunityPage() {
                                 <textarea
                                     value={newText}
                                     onChange={(event) => setNewText(event.target.value)}
-                                    placeholder={selectedGroup ? `Write a post for ${selectedGroup.title}...` : 'Write a post...'}
+                                    placeholder={selectedGroup ? `${selectedGroup.title}-д зориулсан пост бичнэ үү...` : 'Пост бичнэ үү...'}
                                     className="min-h-[120px] w-full rounded-[24px] border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                                 />
 
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="text-sm text-slate-400">Posts are visible inside the selected group.</div>
+                                    <div className="text-sm text-slate-400">Постууд сонгосон бүлэг дотор харагдана.</div>
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
                                             onClick={() => setNewText('')}
                                             className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100 transition hover:border-slate-600"
                                         >
-                                            Clear
+                                            Цэвэрлэх
                                         </button>
                                         <button
                                             type="button"
@@ -698,7 +698,7 @@ export function CommunityPage() {
                                             className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <Send className="h-4 w-4" />
-                                            Post
+                                            Нийтлэх
                                         </button>
                                     </div>
                                 </div>
@@ -707,7 +707,7 @@ export function CommunityPage() {
 
                         <section className="space-y-4">
                             {loading ? (
-                                <div className="rounded-[28px] border border-slate-800 bg-slate-900/80 p-6 text-sm text-slate-400">Loading posts…</div>
+                                <div className="rounded-[28px] border border-slate-800 bg-slate-900/80 p-6 text-sm text-slate-400">Постуудыг ачаалж байна…</div>
                             ) : visiblePosts.length ? (
                                 visiblePosts.map((post) => (
                                     <article
@@ -723,7 +723,7 @@ export function CommunityPage() {
                                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                                         <div className="truncate font-semibold text-white">{post.authorName}</div>
                                                         {isCurrentUser(post.authorId) ? (
-                                                            <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[11px] font-semibold text-cyan-300">You</span>
+                                                            <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[11px] font-semibold text-cyan-300">Та</span>
                                                         ) : null}
                                                         <span className="text-xs text-slate-500">•</span>
                                                         <div className="text-xs text-slate-400">{formatTime(post.createdAt)}</div>
@@ -762,16 +762,16 @@ export function CommunityPage() {
                                             >
                                                 <MessageCircle className="h-4 w-4 text-slate-400" />
                                                 <span>{(commentsByPost[post.id] || []).length}</span>
-                                                <span className="text-slate-400">Comment</span>
+                                                <span className="text-slate-400">Сэтгэгдэл</span>
                                             </button>
                                         </div>
 
                                         {openRepliesByPost[post.id] ? (
                                             <div className="mt-4 space-y-3 border-t border-slate-800/80 pt-4">
                                                 <div className="flex items-center justify-between gap-3">
-                                                    <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Comments</div>
+                                                    <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Сэтгэгдлүүд</div>
                                                     <button type="button" onClick={() => setOpenRepliesByPost((current) => ({ ...current, [post.id]: false }))} className="text-xs text-slate-400 hover:text-white">
-                                                        Close
+                                                        Хаах
                                                     </button>
                                                 </div>
 
@@ -786,7 +786,7 @@ export function CommunityPage() {
                                                                     <div className="flex flex-wrap items-center gap-2">
                                                                         <div className="truncate font-medium text-white">{comment.authorName}</div>
                                                                         {isCurrentUser(comment.authorId) ? (
-                                                                            <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-300">You</span>
+                                                                            <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-300">Та</span>
                                                                         ) : null}
                                                                         <span className="text-xs text-slate-500">•</span>
                                                                         <div className="text-xs text-slate-400">{formatTime(comment.createdAt)}</div>
@@ -797,7 +797,7 @@ export function CommunityPage() {
                                                                             type="button"
                                                                             onClick={() => void handleToggleCommentLike(post.id, comment)}
                                                                             className="inline-flex items-center gap-2 transition duration-200 hover:-translate-y-0.5 hover:text-rose-300"
-                                                                            aria-label="Like comment"
+                                                                            aria-label="Сэтгэгдэл лайкдах"
                                                                         >
                                                                             <Heart className={`h-3.5 w-3.5 ${isLikedByUser(comment.likes) ? 'fill-rose-500 text-rose-500' : 'text-slate-500'}`} />
                                                                             <span>{(comment.likes || []).length || 0}</span>
@@ -824,7 +824,7 @@ export function CommunityPage() {
                                                     <input
                                                         value={commentTextByPost[post.id] || ''}
                                                         onChange={(event) => setCommentTextByPost((current) => ({ ...current, [post.id]: event.target.value }))}
-                                                        placeholder="Write a comment..."
+                                                        placeholder="Сэтгэгдэл бичнэ үү..."
                                                         className="flex-1 rounded-2xl border border-slate-700/80 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/50 focus:outline-none"
                                                     />
                                                     <button
@@ -833,7 +833,7 @@ export function CommunityPage() {
                                                         className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950"
                                                     >
                                                         <Send className="h-4 w-4" />
-                                                        Post
+                                                        Илгээх
                                                     </button>
                                                 </div>
                                             </div>
@@ -842,7 +842,7 @@ export function CommunityPage() {
                                 ))
                             ) : (
                                 <div className="rounded-[28px] border border-slate-800 bg-slate-900/80 p-6 text-sm text-slate-400">
-                                    No posts yet in this group.
+                                    Энэ бүлэгт одоогоор пост алга.
                                 </div>
                             )}
                         </section>
@@ -857,13 +857,13 @@ export function CommunityPage() {
                                     <AlertTriangle className="h-5 w-5" aria-hidden="true" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-xl font-semibold text-white">Confirm delete</h3>
+                                    <h3 className="text-xl font-semibold text-white">Устгахыг батлах</h3>
                                     <p className="mt-2 text-sm leading-6 text-slate-300">
                                         {deleteTarget.kind === 'post'
-                                            ? 'Delete this post?'
+                                            ? 'Энэ постыг устгах уу?'
                                             : deleteTarget.kind === 'group'
-                                                ? 'Delete this group and all posts inside it?'
-                                                : 'Delete this comment?'}
+                                                ? 'Энэ бүлэг болон доторх бүх постыг устгах уу?'
+                                                : 'Энэ сэтгэгдлийг устгах уу?'}
                                     </p>
                                     <p className="mt-1 truncate text-xs text-slate-500">{deleteTarget.title}</p>
                                 </div>
@@ -876,7 +876,7 @@ export function CommunityPage() {
                                     disabled={deleting}
                                     className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:border-slate-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    Cancel
+                                    Цуцлах
                                 </button>
                                 <button
                                     type="button"
@@ -885,7 +885,7 @@ export function CommunityPage() {
                                     className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <Trash2 className="h-4 w-4" aria-hidden="true" />
-                                    <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+                                    <span>{deleting ? 'Устгаж байна...' : 'Устгах'}</span>
                                 </button>
                             </div>
                         </div>

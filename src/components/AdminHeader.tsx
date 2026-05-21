@@ -12,7 +12,7 @@ type AdminHeaderProps = {
 export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }: AdminHeaderProps) {
     const navigate = useNavigate()
 
-    const displayName = profile?.displayName || 'Admin'
+    const displayName = profile?.displayName || 'Админ'
     const email = profile?.email || ''
     const initials = useMemo(() => {
         return (
@@ -38,7 +38,7 @@ export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }:
                     </div>
                     <div className="space-y-1">
                         <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/8 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                            Admin console
+                            Админы самбар
                         </div>
                         <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{displayName}</h1>
                         <p className="text-sm leading-7 text-slate-300 sm:text-base">{email}</p>
@@ -51,7 +51,7 @@ export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }:
                         onClick={() => navigate('/admin')}
                         className={navButtonClass(activePage === 'studio')}
                     >
-                        Admin studio
+                        Курсийн студи
                     </button>
 
                     <button
@@ -60,7 +60,7 @@ export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }:
                         className={navButtonClass(activePage === 'enrollments')}
                     >
                         <span className="inline-flex items-center">
-                            <span>Enrollment admin</span>
+                            <span>Бүртгэлийн удирдлага</span>
                             <span className={`ml-2 inline-flex w-8 items-center justify-center rounded-full px-2 py-1 text-xs font-semibold text-white ${pendingCount > 0 ? 'bg-rose-500' : 'bg-transparent'}`} aria-hidden>
                                 {pendingCount > 0 ? pendingCount : <span className="opacity-0">0</span>}
                             </span>
@@ -72,7 +72,7 @@ export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }:
                         onClick={() => navigate('/classroom')}
                         className={navButtonClass(false)}
                     >
-                        Learning space
+                        <span>Сургалт</span>
                     </button>
 
                     <button
@@ -80,7 +80,7 @@ export function AdminHeader({ profile, onLogout, activePage, pendingCount = 0 }:
                         onClick={onLogout}
                         className="min-w-[10rem] rounded-2xl bg-slate-900 px-4 py-3 text-sm font-medium text-slate-200 transition-colors hover:bg-rose-500/10 hover:text-white"
                     >
-                        Logout
+                        Гарах
                     </button>
                 </div>
             </div>

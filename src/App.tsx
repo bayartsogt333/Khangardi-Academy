@@ -81,6 +81,7 @@ function AppContent() {
                     <Route path="/learn" element={<LearningHomePage />} />
                     <Route path="/community" element={<CommunityPage />} />
                     <Route path="/learn/:courseId" element={<CourseStudyPage />} />
+                    <Route path="/learn/:courseId/lessons/:lessonId" element={<CourseStudyPage />} />
                     <Route path="*" element={<Navigate to={profile.role === 'admin' ? '/admin' : '/home'} replace />} />
                 </Routes>
             </Suspense>

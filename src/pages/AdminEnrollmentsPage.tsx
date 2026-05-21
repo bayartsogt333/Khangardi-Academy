@@ -34,7 +34,7 @@ export function AdminEnrollmentsPage() {
             setEnrollments(allEnrollments)
         } catch (panelError) {
             const firebaseError = panelError as { message?: string }
-            setError(firebaseError.message || 'Failed to load enrollment page.')
+            setError(firebaseError.message || 'Бүртгэлийн хуудсыг ачаалж чадсангүй.')
         } finally {
             setLoading(false)
         }
@@ -64,7 +64,7 @@ export function AdminEnrollmentsPage() {
                     setEnrollments(Array.from(latestByCourse.values()).flat())
                 }, (err) => {
                     if (!cancelled) {
-                        setError(err.message || 'Failed to subscribe to enrollments.')
+                        setError(err.message || 'Бүртгэлүүдийг сонсох боломжгүй байна.')
                     }
                 })
 
@@ -160,7 +160,7 @@ export function AdminEnrollmentsPage() {
 
                 {loading ? (
                     <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
-                        Loading courses and users…
+                        Хичээлүүд болон хэрэглэгчдийг ачаалж байна…
                     </div>
                 ) : null}
 
@@ -168,11 +168,11 @@ export function AdminEnrollmentsPage() {
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div className="max-w-2xl">
                             <div className="inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/8 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200">
-                                Enrollment admin
+                                Бүртгэлийн удирдлага
                             </div>
-                            <h2 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">Manage access and requests</h2>
+                            <h2 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">Хандалт ба хүсэлтүүдийг удирдах</h2>
                             <p className="mt-2 text-sm leading-7 text-slate-400">
-                                Pending requests stay front and center. Switch to all users when you need to grant or revoke access directly.
+                                Хүлээгдэж буй хүсэлтүүдийг эхэнд нь харуулна. Бүх хэрэглэгч рүү шилжиж шууд хандалт өгөх эсвэл цуцлах боломжтой.
                             </p>
                         </div>
 
@@ -182,29 +182,29 @@ export function AdminEnrollmentsPage() {
                                 onClick={() => setView('pending')}
                                 className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${view === 'pending' ? 'bg-cyan-400/10 text-white ring-1 ring-cyan-400/20' : 'text-slate-300 hover:bg-slate-900 hover:text-white'}`}
                             >
-                                Pending
+                                Хүлээгдэж буй
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setView('all')}
                                 className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${view === 'all' ? 'bg-cyan-400/10 text-white ring-1 ring-cyan-400/20' : 'text-slate-300 hover:bg-slate-900 hover:text-white'}`}
                             >
-                                All users
+                                Бүх хэрэглэгч
                             </button>
                         </div>
                     </div>
 
                     <div className="mt-5 grid gap-3 sm:grid-cols-3">
                         <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Pending</div>
+                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Хүлээгдэж буй</div>
                             <div className="mt-2 text-2xl font-semibold text-white">{pendingEnrollments.length}</div>
                         </div>
                         <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Approved</div>
+                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Зөвшөөрсөн</div>
                             <div className="mt-2 text-2xl font-semibold text-white">{approvedEnrollments.length}</div>
                         </div>
                         <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Rejected</div>
+                            <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Татгалзсан</div>
                             <div className="mt-2 text-2xl font-semibold text-white">{rejectedEnrollments.length}</div>
                         </div>
                     </div>
@@ -215,7 +215,7 @@ export function AdminEnrollmentsPage() {
                 <div className="mt-4 grid gap-4">
                     {view === 'pending' ? (
                         <div className="space-y-3">
-                            <h2 className="text-lg font-semibold text-white">Pending requests</h2>
+                            <h2 className="text-lg font-semibold text-white">Хүлээгдэж буй хүсэлтүүд</h2>
                             {pendingEnrollments.length ? (
                                 <ul className="grid gap-3">
                                     {pendingEnrollments.map((item) => (
@@ -225,11 +225,11 @@ export function AdminEnrollmentsPage() {
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <span className="text-sm font-semibold text-white">{item.displayName || item.email || item.userId}</span>
                                                         <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.24em] text-cyan-200">
-                                                            Pending
+                                                            Хүлээгдэж буй
                                                         </span>
                                                     </div>
                                                     <div className="mt-2 text-sm text-slate-400">
-                                                        requested access to <span className="text-slate-200">{coursesById.get(item.courseId)?.title || item.courseId}</span>
+                                                        <span className="text-slate-200">{coursesById.get(item.courseId)?.title || item.courseId}</span> хичээлд хандах хүсэлт илгээсэн.
                                                     </div>
                                                 </div>
 
@@ -240,7 +240,7 @@ export function AdminEnrollmentsPage() {
                                                         disabled={busyId === `${item.courseId}:${item.userId}`}
                                                         className="rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300 disabled:cursor-wait disabled:opacity-60"
                                                     >
-                                                        {busyId === `${item.courseId}:${item.userId}` ? 'Approving…' : 'Approve'}
+                                                        {busyId === `${item.courseId}:${item.userId}` ? 'Зөвшөөрч байна…' : 'Зөвшөөрөх'}
                                                     </button>
                                                     <button
                                                         type="button"
@@ -248,7 +248,7 @@ export function AdminEnrollmentsPage() {
                                                         disabled={busyId === `${item.courseId}:${item.userId}`}
                                                         className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-400/40 hover:bg-rose-500/15 disabled:cursor-wait disabled:opacity-60"
                                                     >
-                                                        Reject
+                                                        Татгалзах
                                                     </button>
                                                 </div>
                                             </div>
@@ -256,12 +256,12 @@ export function AdminEnrollmentsPage() {
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4 text-sm text-slate-400">No pending requests.</p>
+                                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4 text-sm text-slate-400">Хүлээгдэж буй хүсэлт алга.</p>
                             )}
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <h2 className="text-lg font-semibold text-white">All users</h2>
+                            <h2 className="text-lg font-semibold text-white">Бүх хэрэглэгч</h2>
                             {users.length ? users.map((user) => {
                                 const userEnrollments = enrollmentByUser.get(user.uid) ?? []
 
@@ -284,9 +284,9 @@ export function AdminEnrollmentsPage() {
                                                             <span className={`${status === 'approved' ? 'text-emerald-300' : status === 'pending' ? 'text-amber-300' : 'text-slate-500'}`}>{status === 'approved' ? '✓' : status === 'pending' ? '…' : '—'}</span>
                                                             <span className="text-slate-200">{short}</span>
                                                             {status === 'approved' ? (
-                                                                <button type="button" onClick={() => handleRevoke(c.id, user.uid)} disabled={busyId === `${c.id}:${user.uid}`} className="ml-1 rounded-full border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[10px] text-rose-100 transition hover:border-rose-400/40 disabled:cursor-wait disabled:opacity-60">Revoke</button>
+                                                                <button type="button" onClick={() => handleRevoke(c.id, user.uid)} disabled={busyId === `${c.id}:${user.uid}`} className="ml-1 rounded-full border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[10px] text-rose-100 transition hover:border-rose-400/40 disabled:cursor-wait disabled:opacity-60">Цуцлах</button>
                                                             ) : (
-                                                                <button type="button" onClick={() => handleApprove(c.id, user.uid)} disabled={busyId === `${c.id}:${user.uid}`} className="ml-1 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[10px] text-cyan-100 transition hover:border-cyan-300/40 disabled:cursor-wait disabled:opacity-60">Grant</button>
+                                                                <button type="button" onClick={() => handleApprove(c.id, user.uid)} disabled={busyId === `${c.id}:${user.uid}`} className="ml-1 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[10px] text-cyan-100 transition hover:border-cyan-300/40 disabled:cursor-wait disabled:opacity-60">Зөвшөөрөх</button>
                                                             )}
                                                         </div>
                                                     )
@@ -296,7 +296,7 @@ export function AdminEnrollmentsPage() {
                                     </div>
                                 )
                             }) : (
-                                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4 text-sm text-slate-400">No users found.</p>
+                                <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4 text-sm text-slate-400">Хэрэглэгч олдсонгүй.</p>
                             )}
                         </div>
                     )}

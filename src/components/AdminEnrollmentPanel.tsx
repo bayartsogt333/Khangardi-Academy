@@ -34,7 +34,7 @@ export function AdminEnrollmentPanel() {
             }
         } catch (panelError) {
             const firebaseError = panelError as { message?: string }
-            setError(firebaseError.message || 'Failed to load enrollment panel.')
+            setError(firebaseError.message || 'Бүртгэлийн самбарыг ачаалж чадсангүй.')
         } finally {
             setLoading(false)
         }
@@ -70,7 +70,7 @@ export function AdminEnrollmentPanel() {
             await refresh(courseId)
         } catch (actionError) {
             const firebaseError = actionError as { message?: string }
-            setError(firebaseError.message || 'Failed to approve enrollment.')
+            setError(firebaseError.message || 'Бүртгэлийг зөвшөөрч чадсангүй.')
         } finally {
             setBusyId('')
         }
@@ -87,14 +87,14 @@ export function AdminEnrollmentPanel() {
             await refresh(courseId)
         } catch (actionError) {
             const firebaseError = actionError as { message?: string }
-            setError(firebaseError.message || 'Failed to reject enrollment.')
+            setError(firebaseError.message || 'Бүртгэлийг татгалзаж чадсангүй.')
         } finally {
             setBusyId('')
         }
     }
 
     const handleRemove = async (userId: string) => {
-        if (!courseId || !window.confirm('Remove this user access/request?')) return
+        if (!courseId || !window.confirm('Энэ хэрэглэгчийн хандалт эсвэл хүсэлтийг устгах уу?')) return
 
         setBusyId(userId)
         setError('')
@@ -104,7 +104,7 @@ export function AdminEnrollmentPanel() {
             await refresh(courseId)
         } catch (actionError) {
             const firebaseError = actionError as { message?: string }
-            setError(firebaseError.message || 'Failed to remove enrollment.')
+            setError(firebaseError.message || 'Бүртгэлийг устгаж чадсангүй.')
         } finally {
             setBusyId('')
         }
@@ -113,8 +113,8 @@ export function AdminEnrollmentPanel() {
     if (loading) {
         return (
             <section className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20">
-                <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Enrollment control</div>
-                <p className="mt-3 text-sm text-slate-400">Loading users and requests…</p>
+                <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Бүртгэлийн удирдлага</div>
+                <p className="mt-3 text-sm text-slate-400">Хэрэглэгчид болон хүсэлтүүдийг ачаалж байна…</p>
             </section>
         )
     }
@@ -124,18 +124,18 @@ export function AdminEnrollmentPanel() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                        Enrollment control
+                        Бүртгэлийн удирдлага
                     </span>
-                    <h2 className="mt-2 text-2xl font-semibold text-white">Approve course access requests</h2>
+                    <h2 className="mt-2 text-2xl font-semibold text-white">Хичээлийн хандалтын хүсэлтүүдийг батлах</h2>
                     <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-400">
-                        Choose a course, review every user, and approve or reject requests. Only approved users can open the
-                        lesson tree.
+                        Хичээл сонгож, хэрэглэгч бүрийн хүсэлтийг шалгаад батлах эсвэл татгалзана. Зөвшөөрөгдсөн хэрэглэгчид л
+                        хичээлийн бүтэц рүү орно.
                     </p>
                 </div>
 
                 <div className="min-w-[260px]">
                     <label className="grid gap-2 text-sm text-slate-300">
-                        <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Course</span>
+                        <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Хичээл</span>
                         <select
                             value={courseId}
                             onChange={(event) => {
@@ -158,15 +158,15 @@ export function AdminEnrollmentPanel() {
 
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
                 <article className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5">
-                    <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Pending</div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Хүлээгдэж буй</div>
                     <div className="mt-2 text-3xl font-semibold text-white">{counts.pending}</div>
                 </article>
                 <article className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5">
-                    <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Approved</div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Зөвшөөрсөн</div>
                     <div className="mt-2 text-3xl font-semibold text-white">{counts.approved}</div>
                 </article>
                 <article className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5">
-                    <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Rejected</div>
+                    <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Татгалзсан</div>
                     <div className="mt-2 text-3xl font-semibold text-white">{counts.rejected}</div>
                 </article>
             </div>
@@ -189,7 +189,7 @@ export function AdminEnrollmentPanel() {
                                         {user.role}
                                     </span>
                                     <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.24em] ${status === 'approved' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-100' : status === 'pending' ? 'border-amber-400/20 bg-amber-400/10 text-amber-100' : status === 'rejected' ? 'border-rose-400/20 bg-rose-400/10 text-rose-100' : 'border-slate-700 bg-slate-900 text-slate-300'}`}>
-                                        {status}
+                                        {status === 'approved' ? 'Зөвшөөрсөн' : status === 'pending' ? 'Хүлээгдэж буй' : status === 'rejected' ? 'Татгалзсан' : 'Хүсэлтгүй'}
                                     </span>
                                 </div>
                             </div>
@@ -201,7 +201,7 @@ export function AdminEnrollmentPanel() {
                                     disabled={busyId === user.uid}
                                     className="rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300 disabled:cursor-wait disabled:opacity-60"
                                 >
-                                    {busyId === user.uid && status !== 'approved' ? 'Working…' : status === 'approved' ? 'Approved' : 'Approve'}
+                                    {busyId === user.uid && status !== 'approved' ? 'Ажиллаж байна…' : status === 'approved' ? 'Зөвшөөрсөн' : 'Зөвшөөрөх'}
                                 </button>
                                 <button
                                     type="button"
@@ -209,7 +209,7 @@ export function AdminEnrollmentPanel() {
                                     disabled={busyId === user.uid}
                                     className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:-translate-y-0.5 hover:border-rose-400/40 disabled:cursor-wait disabled:opacity-60"
                                 >
-                                    Reject
+                                    Татгалзах
                                 </button>
                                 <button
                                     type="button"
@@ -217,14 +217,14 @@ export function AdminEnrollmentPanel() {
                                     disabled={busyId === user.uid}
                                     className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white disabled:cursor-wait disabled:opacity-60"
                                 >
-                                    Remove
+                                    Устгах
                                 </button>
                             </div>
                         </div>
                     )
                 }) : (
                     <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-400">
-                        No users found.
+                        Хэрэглэгч олдсонгүй.
                     </p>
                 )}
             </div>

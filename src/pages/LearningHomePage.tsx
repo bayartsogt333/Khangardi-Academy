@@ -29,7 +29,7 @@ export function LearningHomePage() {
             } catch (courseError) {
                 const firebaseError = courseError as { message?: string }
                 if (active) {
-                    setError(firebaseError.message || 'Failed to load courses.')
+                    setError(firebaseError.message || 'Хичээлүүдийг ачаалж чадсангүй.')
                 }
             } finally {
                 if (active) {
@@ -50,28 +50,28 @@ export function LearningHomePage() {
 
                 <section className="hidden gap-4 sm:grid sm:grid-cols-3">
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
-                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Catalog</div>
+                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Каталог</div>
                         <div className="mt-3 text-3xl font-semibold text-white">{courses.length}</div>
-                        <p className="mt-2 text-sm text-slate-400">Published courses available to students.</p>
+                        <p className="mt-2 text-sm text-slate-400">Оюутнуудад харагдах нийтлэгдсэн хичээлүүд.</p>
                     </article>
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
-                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Profile</div>
+                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Профайл</div>
                         <div className="mt-3 flex items-center gap-3 text-3xl font-semibold text-white">
                             <span>{profile?.role}</span>
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">
                                 <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(74,222,128,0.15)]" />
-                                Active
+                                Идэвхтэй
                             </span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-400">Your current access level.</p>
+                        <p className="mt-2 text-sm text-slate-400">Таны одоогийн хандалтын түвшин.</p>
                     </article>
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
-                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Access</div>
+                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Хандалт</div>
                         <div className="mt-3 flex items-center gap-2 text-3xl font-semibold text-white">
                             <BookOpen className="h-7 w-7 text-cyan-300" />
-                            <span>Study</span>
+                            <span>Суралцах</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-400">Continue a course page to request or keep studying.</p>
+                        <p className="mt-2 text-sm text-slate-400">Хичээлийн хуудсаар дамжин үргэлжлүүлэн суралцаарай.</p>
                     </article>
                 </section>
 
@@ -112,7 +112,7 @@ export function LearningHomePage() {
                                         />
                                     ) : (
                                         <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                                            No thumbnail
+                                            Зураг байхгүй
                                         </div>
                                     )}
                                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent p-4">
@@ -133,16 +133,18 @@ export function LearningHomePage() {
                                     <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                                         <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
                                             {course.category || 'Category'}
+                                            {course.category || 'Ангилал'}
                                         </span>
                                         <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
                                             {course.level || 'Level'}
+                                            {course.level || 'Түвшин'}
                                         </span>
                                     </div>
 
                                     <div className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300">
                                         <span className="inline-flex items-center gap-2">
                                             {openCourseId === course.id ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" /> : null}
-                                            <span>Open course</span>
+                                            <span>Хичээл нээх</span>
                                         </span>
                                     </div>
                                 </div>
@@ -152,8 +154,10 @@ export function LearningHomePage() {
                 ) : (
                     <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8 text-center shadow-xl shadow-black/20">
                         <h2 className="text-2xl font-semibold text-white">Nothing is live yet</h2>
+                        <h2 className="text-2xl font-semibold text-white">Одоогоор идэвхтэй хичээл алга</h2>
                         <p className="mt-3 text-sm leading-7 text-slate-400">
                             Ask an admin to publish a course and it will appear here automatically.
+                            Админ хичээл нийтэлмэгц энд автоматаар харагдана.
                         </p>
                     </div>
                 )}

@@ -108,7 +108,7 @@ export function StudentCourseViewer() {
             setSelectedLessonId(firstLesson?.id ?? null)
         } catch (viewerError) {
             const firebaseError = viewerError as { message?: string }
-            setError(firebaseError.message || 'Failed to load courses.')
+            setError(firebaseError.message || 'Хичээлүүдийг ачаалж чадсангүй.')
         } finally {
             if (showLoading) {
                 setLoading(false)
@@ -143,9 +143,9 @@ export function StudentCourseViewer() {
         return (
             <section className="student-viewer student-viewer--loading">
                 <div className="course-studio-card">
-                    <span className="card-kicker">Learning space</span>
-                    <h2>Loading courses…</h2>
-                    <p>Fetching published courses and lesson trees.</p>
+                    <span className="card-kicker">Сургалтын орчин</span>
+                    <h2>Хичээлүүдийг ачаалж байна…</h2>
+                    <p>Нийтлэгдсэн хичээлүүд болон бүтэц татагдаж байна.</p>
                 </div>
             </section>
         )
@@ -155,31 +155,31 @@ export function StudentCourseViewer() {
         <section className="student-viewer">
             {loading ? (
                 <div className="mb-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
-                    Loading course content…
+                    Хичээлийн агуулгыг ачаалж байна…
                 </div>
             ) : null}
             <header className="student-viewer__hero">
                 <div>
-                    <span className="eyebrow">Learning space</span>
-                    <h2>Choose a course and start learning</h2>
+                    <span className="eyebrow">Сургалтын орчин</span>
+                    <h2>Хичээл сонгоод суралцаж эхлээрэй</h2>
                     <p>
-                        Only published courses are visible here. Pick a section, then open a lesson to watch the video
-                        and read notes.
+                        Энд зөвхөн нийтлэгдсэн хичээлүүд харагдана. Хэсэг сонгоод дараа нь хичээл нээж видео үзэх,
+                        тэмдэглэл унших боломжтой.
                     </p>
                 </div>
 
                 <div className="student-viewer__stats">
                     <article>
                         <strong>{courses.length}</strong>
-                        <span>Published courses</span>
+                        <span>Нийтлэгдсэн хичээл</span>
                     </article>
                     <article>
                         <strong>{tree.sections.length}</strong>
-                        <span>Sections</span>
+                        <span>Хэсэг</span>
                     </article>
                     <article>
                         <strong>{lessonCount}</strong>
-                        <span>Lessons</span>
+                        <span>Хичээл</span>
                     </article>
                 </div>
             </header>
@@ -188,9 +188,9 @@ export function StudentCourseViewer() {
 
             {!courses.length ? (
                 <article className="course-studio-card">
-                    <span className="card-kicker">No published courses</span>
-                    <h2>Nothing is live yet</h2>
-                    <p>Ask an admin to publish a course and it will appear here automatically.</p>
+                    <span className="card-kicker">Нийтлэгдсэн курс алга</span>
+                    <h2>Одоогоор идэвхтэй курс алга</h2>
+                    <p>Админ курс нийтэлмэгц энд автоматаар харагдана.</p>
                 </article>
             ) : (
                 <div className="student-viewer__layout">
@@ -198,7 +198,7 @@ export function StudentCourseViewer() {
                         <div className="panel-heading">
                             <div>
                                 <span className="card-kicker">Courses</span>
-                                <h3>Published catalog</h3>
+                                <h3>Нийтлэгдсэн каталог</h3>
                             </div>
                         </div>
 
@@ -218,7 +218,7 @@ export function StudentCourseViewer() {
                                         ) : null}
                                         <span>{course.title}</span>
                                     </span>
-                                    <small>{course.category || course.level || 'Course'}</small>
+                                    <small>{course.category || course.level || 'Курс'}</small>
                                 </button>
                             ))}
                         </div>
@@ -227,12 +227,12 @@ export function StudentCourseViewer() {
                     <div className="student-content">
                         <section className="course-studio-card student-course-hero">
                             <div className="student-course-hero__copy">
-                                <span className="card-kicker">Course</span>
-                                <h3>{selectedCourse?.title || 'Select a course'}</h3>
-                                <p>{selectedCourse?.description || 'Choose a course from the catalog to see sections and lessons.'}</p>
+                                <span className="card-kicker">Курс</span>
+                                <h3>{selectedCourse?.title || 'Курс сонгоно уу'}</h3>
+                                <p>{selectedCourse?.description || 'Каталогос курс сонгож хэсэг, хичээлүүдийг үзнэ үү.'}</p>
                                 <div className="preview-meta">
-                                    <span>{selectedCourse?.category || 'Category'}</span>
-                                    <span>{selectedCourse?.level || 'Level'}</span>
+                                    <span>{selectedCourse?.category || 'Ангилал'}</span>
+                                    <span>{selectedCourse?.level || 'Түвшин'}</span>
                                     <span>{selectedCourse?.status || 'published'}</span>
                                 </div>
                             </div>
@@ -242,8 +242,8 @@ export function StudentCourseViewer() {
                                     <img src={selectedCourse.thumbnailURL} alt={selectedCourse.title} />
                                 ) : (
                                     <div>
-                                        <strong>No thumbnail</strong>
-                                        <span>This course has no cover image yet.</span>
+                                        <strong>Одоогоор ковер зураггүй</strong>
+                                        <span>Энэ курст одоогоор ковер зураг алга.</span>
                                     </div>
                                 )}
                             </div>
@@ -253,8 +253,8 @@ export function StudentCourseViewer() {
                             <div className="course-studio-card">
                                 <div className="panel-heading">
                                     <div>
-                                        <span className="card-kicker">Sections</span>
-                                        <h3>Course structure</h3>
+                                        <span className="card-kicker">Хэсэг</span>
+                                        <h3>Курсийн бүтэц</h3>
                                     </div>
                                 </div>
 
@@ -268,9 +268,9 @@ export function StudentCourseViewer() {
                                             >
                                                 <div>
                                                     <strong>{section.title}</strong>
-                                                    <span>{section.description || 'Section overview'}</span>
+                                                    <span>{section.description || 'Хэсгийн тойм'}</span>
                                                 </div>
-                                                <small>{section.lessons.length} lessons</small>
+                                                <small>{section.lessons.length} хичээл</small>
                                             </button>
 
                                             {section.id === selectedSectionId ? (
@@ -283,7 +283,7 @@ export function StudentCourseViewer() {
                                                             onClick={() => handleLessonSelect(lesson.id)}
                                                         >
                                                             <span>{lesson.title}</span>
-                                                            <small>{lesson.youtubeVideoId || 'Lesson'}</small>
+                                                            <small>{lesson.youtubeVideoId || 'Хичээл'}</small>
                                                         </button>
                                                     ))}
                                                 </div>
@@ -294,13 +294,13 @@ export function StudentCourseViewer() {
                             </div>
 
                             <article className="course-studio-card student-lesson-view">
-                                <span className="card-kicker">Lesson</span>
-                                <h3>{selectedLesson?.title || 'Select a lesson'}</h3>
+                                <span className="card-kicker">Хичээл</span>
+                                <h3>{selectedLesson?.title || 'Хичээл сонгоно уу'}</h3>
                                 {youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ? (
                                     <div className="video-frame">
                                         <iframe
                                             src={youtubeEmbedUrl(selectedLesson?.youtubeVideoId) ?? undefined}
-                                            title={selectedLesson?.title || 'Lesson video'}
+                                            title={selectedLesson?.title || 'Хичээлийн видео'}
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                             allowFullScreen
                                         />
@@ -308,16 +308,16 @@ export function StudentCourseViewer() {
                                 ) : null}
 
                                 <div className="space-y-2">
-                                    <span className="card-kicker">Notes</span>
+                                    <span className="card-kicker">Тэмдэглэл</span>
                                     {selectedLesson?.notesTitle ? (
                                         <h4 className="text-cyan-100">{selectedLesson.notesTitle}</h4>
                                     ) : null}
-                                    <p>{selectedLesson?.notes || 'Open a lesson to view notes and video playback.'}</p>
+                                    <p>{selectedLesson?.notes || 'Хичээл нээгээд тэмдэглэл болон видеог үзнэ үү.'}</p>
                                 </div>
 
                                 {selectedLesson?.resourceLinks.length ? (
                                     <div className="space-y-2 border-t border-slate-800 pt-5">
-                                        <span className="card-kicker">Links</span>
+                                        <span className="card-kicker">Холбоосууд</span>
                                         <ul className="space-y-2 text-sm">
                                             {selectedLesson.resourceLinks.map((link) => (
                                                 <li key={`${link.title}-${link.url}`}>

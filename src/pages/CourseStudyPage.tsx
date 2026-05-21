@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { loadCourseById, loadCourseTree } from '../api/courses'
 import {
     cancelEnrollmentRequest,
@@ -20,7 +20,7 @@ type CourseTree = {
 }
 
 function youtubeEmbedUrl(videoId?: string | null) {
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : null
+    return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null
 }
 
 function LinkGlyph() {
@@ -66,7 +66,7 @@ const LessonCard = memo(function LessonCard({ lesson, lessonIndex, isSelected, i
             </div>
             <small className="text-xs uppercase tracking-[0.24em] text-slate-500">
                 {isCompleted ? (
-                    <span className="inline-flex items-center gap-2 text-emerald-300" aria-label="Completed" title="Completed">
+                    <span className="inline-flex items-center gap-2 text-emerald-300" aria-label="Дууссан" title="Дууссан">
                         <CheckGlyph />
                     </span>
                 ) : (
@@ -108,7 +108,7 @@ const SectionCard = memo(function SectionCard({
                     : 'border-slate-800 bg-slate-950/70 text-slate-100'
                     }`}
             >
-                <span className="pointer-events-none absolute inset-y-0 left-0 w-1 rounded-r-full bg-gradient-to-b from-cyan-300/0 via-cyan-300/0 to-cyan-300/0 transition duration-300 group-hover:from-cyan-300/50 group-hover:via-cyan-300/80 group-hover:to-indigo-300/50" />
+                <span className="pointer-events-none absolute inset-y-0 left-0 w-1 rounded-r-full bg-linear-to-b from-cyan-300/0 via-cyan-300/0 to-cyan-300/0 transition duration-300 group-hover:from-cyan-300/50 group-hover:via-cyan-300/80 group-hover:to-indigo-300/50" />
                 <div>
                     <div className="font-semibold text-white transition group-hover:text-cyan-50">
                         {sectionIndex + 1}. {section.title}
@@ -144,7 +144,8 @@ const SectionCard = memo(function SectionCard({
 })
 
 export function CourseStudyPage() {
-    const { courseId } = useParams()
+    const { courseId, lessonId } = useParams()
+    const navigate = useNavigate()
     const { logout, profile } = useAuth()
     const isAdmin = useMemo(() => profile?.role === 'admin', [profile?.role])
     const [course, setCourse] = useState<CourseRecord | null>(null)
@@ -191,6 +192,7 @@ export function CourseStudyPage() {
         return selectedSection?.lessons[0] ?? null
     }, [selectedLessonLocation, selectedSection])
     const selectedLessonCompleted = selectedLesson ? completedLessonIdSet.has(selectedLesson.id) : false
+    const isLessonRoute = Boolean(lessonId)
     const lessonCount = useMemo(
         () => tree.sections.reduce((total, section) => total + section.lessons.length, 0),
         [tree.sections],
@@ -206,7 +208,7 @@ export function CourseStudyPage() {
 
     const loadStudy = useCallback(async () => {
         if (!courseId) {
-            setError('Missing course id.')
+            setError('Хичээлийн ID алга.')
             setLoading(false)
             return
         }
@@ -247,8 +249,21 @@ export function CourseStudyPage() {
 
             setTree({ course: nextCourse, sections: nextTree.sections })
 
-            const nextSection = nextTree.sections[0] ?? null
-            const nextLesson = nextSection?.lessons[0] ?? null
+            const requestedLessonId = lessonId ?? null
+            let nextSection = nextTree.sections[0] ?? null
+            let nextLesson = nextSection?.lessons[0] ?? null
+
+            if (requestedLessonId) {
+                for (const section of nextTree.sections) {
+                    const requestedLesson = section.lessons.find((item) => item.id === requestedLessonId)
+                    if (requestedLesson) {
+                        nextSection = section
+                        nextLesson = requestedLesson
+                        break
+                    }
+                }
+            }
+
             setSelectedSectionId(nextSection?.id ?? null)
             setSelectedLessonId(nextLesson?.id ?? null)
             setOpenSectionIds(nextSection?.id ? [nextSection.id] : [])
@@ -264,11 +279,11 @@ export function CourseStudyPage() {
             }
         } catch (studyError) {
             const firebaseError = studyError as { message?: string }
-            setError(firebaseError.message || 'Failed to load the course.')
+            setError(firebaseError.message || 'Хичээлийг ачаалж чадсангүй.')
         } finally {
             setLoading(false)
         }
-    }, [courseId, isAdmin, profile?.uid])
+    }, [courseId, isAdmin, lessonId, profile?.uid])
 
     useEffect(() => {
         void loadStudy()
@@ -285,7 +300,7 @@ export function CourseStudyPage() {
             await loadStudy()
         } catch (enrollError) {
             const firebaseError = enrollError as { message?: string }
-            setError(firebaseError.message || 'Failed to send request.')
+            setError(firebaseError.message || 'Хүсэлт илгээж чадсангүй.')
         } finally {
             setSaving(false)
         }
@@ -304,7 +319,7 @@ export function CourseStudyPage() {
             await loadStudy()
         } catch (cancelError) {
             const firebaseError = cancelError as { message?: string }
-            setError(firebaseError.message || 'Failed to cancel request.')
+            setError(firebaseError.message || 'Хүсэлтийг цуцалж чадсангүй.')
         } finally {
             setSaving(false)
         }
@@ -321,7 +336,7 @@ export function CourseStudyPage() {
             setEnrollments((current) => current.filter((item) => item.userId !== userId))
         } catch (removeError) {
             const firebaseError = removeError as { message?: string }
-            setError(firebaseError.message || 'Failed to remove enrollment.')
+            setError(firebaseError.message || 'Бүртгэлийг устгаж чадсангүй.')
         } finally {
             setEnrollmentSavingId('')
         }
@@ -343,7 +358,7 @@ export function CourseStudyPage() {
             }
         } catch (progressError) {
             const firebaseError = progressError as { message?: string }
-            setError(firebaseError.message || 'Failed to update lesson progress.')
+            setError(firebaseError.message || 'Хичээлийн явцыг шинэчилж чадсангүй.')
         } finally {
             setSaving(false)
         }
@@ -374,20 +389,27 @@ export function CourseStudyPage() {
     )
 
     const handleSelectLesson = useCallback((sectionId: string, lessonId: string) => {
+        if (window.matchMedia('(max-width: 1023px)').matches) {
+            if (courseId) {
+                navigate(`/learn/${courseId}/lessons/${lessonId}`)
+            }
+            return
+        }
+
         setSelectedSectionId(sectionId)
         setSelectedLessonId(lessonId)
-    }, [])
+    }, [courseId, navigate])
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
                 {initialLoading ? (
                     <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
-                        Loading course…
+                        Хичээлийг ачаалж байна…
                     </div>
                 ) : loading ? (
                     <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
-                        Loading course content…
+                        Хичээлийн агуулгыг ачаалж байна…
                     </div>
                 ) : null}
                 <SiteHeader profile={profile} onLogout={logout} />
@@ -402,16 +424,16 @@ export function CourseStudyPage() {
                     <section className="grid gap-6 rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
                         <div className="space-y-3">
                             <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                                Enrollment request
+                                Бүртгэлийн хүсэлт
                             </span>
-                            <h2 className="text-2xl font-semibold text-white">Request access to continue</h2>
+                            <h2 className="text-2xl font-semibold text-white">Үргэлжлүүлэхийн тулд хандалт хүсэх</h2>
                             <p className="max-w-2xl text-sm leading-7 text-slate-300">
-                                This course is published, but your account has not been approved yet. Send a request and an admin
-                                will approve or reject it.
+                                Энэ хичээл нийтлэгдсэн ч таны бүртгэл одоогоор зөвшөөрөгдөөгүй байна. Хүсэлт илгээвэл админ шалгаад
+                                батлах эсвэл татгалзана.
                             </p>
                             <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                                 <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
-                                    {enrollmentStatus || 'no request'}
+                                    {enrollmentStatus === 'pending' ? 'Хүлээгдэж буй' : enrollmentStatus === 'approved' ? 'Зөвшөөрсөн' : enrollmentStatus === 'rejected' ? 'Татгалзсан' : 'Хүсэлтгүй'}
                                 </span>
                             </div>
                         </div>
@@ -419,7 +441,7 @@ export function CourseStudyPage() {
                         <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Course access</div>
+                                    <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Хичээлийн хандалт</div>
                                     <div className="mt-1 text-lg font-semibold text-white">{course.title}</div>
                                 </div>
                                 {enrollmentStatus === 'pending' ? (
@@ -429,16 +451,16 @@ export function CourseStudyPage() {
                                         disabled={saving}
                                         className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:-translate-y-0.5 hover:border-rose-400/40 disabled:cursor-wait disabled:opacity-60"
                                     >
-                                        {saving ? 'Cancelling…' : 'Cancel request'}
+                                        {saving ? 'Цуцалж байна…' : 'Хүсэлтийг цуцлах'}
                                     </button>
                                 ) : (
                                     <button
                                         type="button"
                                         onClick={handleRequestAccess}
                                         disabled={saving}
-                                        className="rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300 disabled:cursor-wait disabled:opacity-60"
+                                        className="rounded-2xl bg-linear-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300 disabled:cursor-wait disabled:opacity-60"
                                     >
-                                        {saving ? 'Sending…' : enrollmentStatus === 'rejected' ? 'Request again' : 'Request access'}
+                                        {saving ? 'Илгээж байна…' : enrollmentStatus === 'rejected' ? 'Дахин хүсэх' : 'Хандалт хүсэх'}
                                     </button>
                                 )}
                             </div>
@@ -448,10 +470,23 @@ export function CourseStudyPage() {
 
                 {course && canAccess ? (
                     <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-                        <aside className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.32)] backdrop-blur-xl">
+                        <aside className={`rounded-3xl border border-slate-800/80 bg-slate-900/70 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.32)] backdrop-blur-xl ${isLessonRoute ? 'hidden lg:block' : ''}`}>
                             <div className="space-y-2">
-                                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Sections</span>
-                                <h2 className="text-2xl font-semibold text-white">Course structure</h2>
+                                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Хэсгүүд</span>
+                                <h2 className="text-2xl font-semibold text-white">Хичээлийн бүтэц</h2>
+                            </div>
+
+                            <div className="mt-4 rounded-2xl border border-cyan-400/25 bg-slate-950/70 p-4">
+                                <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-200">
+                                    <span className="font-medium">Явц</span>
+                                    <span className="text-base font-bold text-cyan-200">{completionPercent}%</span>
+                                </div>
+                                <div className="relative h-4 overflow-hidden rounded-full bg-slate-800 ring-1 ring-white/10">
+                                    <div
+                                        className="absolute left-0 top-0 h-4 rounded-full bg-linear-to-r from-emerald-300 via-cyan-300 to-indigo-400 transition-[width] duration-700 ease-out"
+                                        style={{ width: `${completionPercent}%` }}
+                                    />
+                                </div>
                             </div>
 
                             <div className="mt-5 space-y-3">
@@ -472,26 +507,13 @@ export function CourseStudyPage() {
                         </aside>
 
                         <section className="space-y-6">
-                            <article className="overflow-hidden rounded-3xl border border-slate-800/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.96)_0%,rgba(2,6,23,0.94)_100%)] p-0 shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl">
-                                <div className="p-6">
+                            <article className={`${isLessonRoute ? '' : 'hidden lg:block'} overflow-hidden rounded-3xl border border-slate-800/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.96)_0%,rgba(2,6,23,0.94)_100%)] p-0 shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl`}>
+                                <div className={`${isLessonRoute ? 'hidden lg:block' : ''} p-6`}>
                                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                         <div>
-                                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Now studying</span>
+                                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Одоо үзэж буй</span>
                                             <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">{course.title}</h1>
-                                            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">{course.description || 'Choose a lesson from the section list to start learning.'}</p>
-                                        </div>
-
-                                        <div className="mt-3 lg:mt-0">
-                                            <div className="w-full max-w-xs">
-                                                <div className="mb-2 text-xs text-slate-400">Progress</div>
-                                                <div className="relative h-6 w-full overflow-hidden rounded-full bg-slate-800/90 ring-1 ring-white/5">
-                                                    <div className="absolute left-0 top-0 h-6 rounded-full bg-gradient-to-r from-emerald-300 via-cyan-300 to-indigo-400 transition-[width] duration-700 ease-out" style={{ width: `${completionPercent}%` }} />
-                                                    <div className="progress-shine absolute top-0 h-6 w-1/3 rounded-full bg-white/20 blur-[1px]" />
-                                                    <div className="relative z-10 flex h-6 items-center justify-center text-sm font-semibold text-slate-950 mix-blend-screen">
-                                                        {completionPercent}%
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">{course.description || 'Суралцаж эхлэхийн тулд хэсгийн жагсаалтаас хичээл сонгоно уу.'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -510,8 +532,8 @@ export function CourseStudyPage() {
                                                     />
                                                 </div>
                                             ) : (
-                                                <div className="flex min-h-[320px] items-center justify-center rounded-[28px] border border-slate-800 bg-slate-950/40 px-6 text-center text-slate-400">
-                                                    No video selected yet.
+                                                <div className="flex min-h-80 items-center justify-center rounded-[28px] border border-slate-800 bg-slate-950/40 px-6 text-center text-slate-400">
+                                                    Одоогоор видео сонгогдоогүй байна.
                                                 </div>
                                             )}
                                         </div>
@@ -520,9 +542,9 @@ export function CourseStudyPage() {
                                             <div className="rounded-[28px] border border-slate-800/80 bg-slate-950/55 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                                                 <div className="space-y-4">
                                                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
-                                                        <span>Lesson</span>
+                                                        <span>Хичээл</span>
                                                         <span className="rounded-full border border-slate-700/80 bg-slate-900/80 px-2.5 py-1 text-[10px] tracking-[0.18em] text-slate-300">
-                                                            {selectedLesson?.title || 'Pick a lesson'}
+                                                            {selectedLesson?.title || 'Хичээл сонгоно уу'}
                                                         </span>
                                                     </div>
 
@@ -534,7 +556,7 @@ export function CourseStudyPage() {
 
                                                     {selectedLesson?.resourceLinks.length ? (
                                                         <div className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-[0_10px_28px_rgba(0,0,0,0.18)]">
-                                                            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Resources</div>
+                                                            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Нөөц</div>
 
                                                             <ul className="mt-3 space-y-2 text-sm">
                                                                 {selectedLesson.resourceLinks.map((link) => (
@@ -546,7 +568,7 @@ export function CourseStudyPage() {
                                                                             className="inline-flex flex-1 items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/8 px-3 py-2 text-cyan-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/12 hover:text-cyan-100"
                                                                         >
                                                                             <LinkGlyph />
-                                                                            <span className="break-words">{link.title || link.url}</span>
+                                                                            <span className="wrap-break-word">{link.title || link.url}</span>
                                                                         </a>
                                                                         <button
                                                                             type="button"
@@ -559,7 +581,7 @@ export function CourseStudyPage() {
                                                                             }}
                                                                             className="ml-2 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100"
                                                                         >
-                                                                            {copiedLink === link.url ? 'Copied' : 'Copy'}
+                                                                            {copiedLink === link.url ? 'Хуулсан' : 'Хуулах'}
                                                                         </button>
                                                                     </li>
                                                                 ))}
@@ -572,9 +594,9 @@ export function CourseStudyPage() {
                                                             <button
                                                                 type="button"
                                                                 onClick={handleToggleLessonProgress}
-                                                                className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
+                                                                className="w-full rounded-2xl bg-linear-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
                                                             >
-                                                                {selectedLessonCompleted ? 'Mark incomplete' : 'Mark complete'}
+                                                                {selectedLessonCompleted ? 'Дуусаагүй гэж тэмдэглэх' : 'Дууссан гэж тэмдэглэх'}
                                                             </button>
                                                         ) : null}
                                                     </div>
@@ -591,12 +613,12 @@ export function CourseStudyPage() {
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
                                         <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
-                                            Enrollment management
+                                            Бүртгэлийн удирдлага
                                         </span>
-                                        <h3 className="mt-2 text-2xl font-semibold text-white">Enrolled students</h3>
+                                        <h3 className="mt-2 text-2xl font-semibold text-white">Бүртгүүлсэн сурагчид</h3>
                                     </div>
                                     <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-300">
-                                        {enrollments.length} students
+                                        {enrollments.length} сурагч
                                     </span>
                                 </div>
 
@@ -619,12 +641,12 @@ export function CourseStudyPage() {
                                                 disabled={enrollmentSavingId === item.userId}
                                                 className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-100 transition hover:-translate-y-0.5 hover:border-rose-400/40 disabled:cursor-wait disabled:opacity-60"
                                             >
-                                                {enrollmentSavingId === item.userId ? 'Removing…' : 'Remove'}
+                                                {enrollmentSavingId === item.userId ? 'Устгаж байна…' : 'Устгах'}
                                             </button>
                                         </div>
                                     )) : (
                                         <p className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-400">
-                                            No one is enrolled yet.
+                                            Одоогоор бүртгүүлсэн хүн алга.
                                         </p>
                                     )}
                                 </div>

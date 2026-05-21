@@ -358,7 +358,7 @@ export function AdminCourseBuilder() {
                 await deleteCourse(deleteTarget.courseId)
                 resetToNewCourse()
                 await reloadCourses(null, { resetSelection: true })
-                setMessage('Course deleted.')
+                setMessage('Курс устгагдлаа.')
                 return
             }
 
@@ -367,7 +367,7 @@ export function AdminCourseBuilder() {
                 if (selection.sectionId === deleteTarget.sectionId) {
                     setSelection((current) => ({ ...current, sectionId: null, lessonId: null }))
                 }
-                setMessage('Section deleted.')
+                setMessage('Хэсэг устгагдлаа.')
                 await reloadCourses(selection.courseId)
                 await reloadTree(selection.courseId)
                 return
@@ -377,12 +377,12 @@ export function AdminCourseBuilder() {
             if (selection.lessonId === deleteTarget.lessonId) {
                 setSelection((current) => ({ ...current, lessonId: null }))
             }
-            setMessage('Lesson deleted.')
+            setMessage('Хичээл устгагдлаа.')
             await reloadCourses(selection.courseId)
             await reloadTree(selection.courseId)
         } catch (deleteError) {
             const firebaseError = deleteError as { message?: string }
-            setError(firebaseError.message || 'Failed to delete item.')
+            setError(firebaseError.message || 'Элементийг устгаж чадсангүй.')
         } finally {
             setBusy(false)
             setDeleteTarget(null)
@@ -415,11 +415,11 @@ export function AdminCourseBuilder() {
 
         try {
             await reorderSections(selection.courseId, orderedIds)
-            setMessage('Section order updated.')
+            setMessage('Хэсгийн дараалал шинэчлэгдлээ.')
             await reloadTree(selection.courseId)
         } catch (reorderError) {
             const firebaseError = reorderError as { message?: string }
-            setError(firebaseError.message || 'Failed to reorder sections.')
+            setError(firebaseError.message || 'Хэсгүүдийн дарааллыг өөрчилж чадсангүй.')
         } finally {
             setBusy(false)
             setDragSource(null)
@@ -456,11 +456,11 @@ export function AdminCourseBuilder() {
 
         try {
             await reorderLessons(selection.courseId, targetSectionId, orderedIds)
-            setMessage('Lesson order updated.')
+            setMessage('Хичээлийн дараалал шинэчлэгдлээ.')
             await reloadTree(selection.courseId)
         } catch (reorderError) {
             const firebaseError = reorderError as { message?: string }
-            setError(firebaseError.message || 'Failed to reorder lessons.')
+            setError(firebaseError.message || 'Хичээлүүдийн дарааллыг өөрчилж чадсангүй.')
         } finally {
             setBusy(false)
             setDragSource(null)
@@ -479,12 +479,12 @@ export function AdminCourseBuilder() {
         try {
             if (selection.courseId) {
                 await updateCourse(selection.courseId, courseDraft, thumbnailFile)
-                setMessage('Course updated.')
+                setMessage('Курс шинэчлэгдлээ.')
             } else {
                 const createdCourseId = await createCourse(courseDraft, profile.uid, thumbnailFile)
                 targetCourseId = createdCourseId
                 setSelection({ courseId: createdCourseId, sectionId: null, lessonId: null })
-                setMessage('Course created.')
+                setMessage('Курс үүсгэгдлээ.')
             }
 
             setThumbnailFile(null)
@@ -492,7 +492,7 @@ export function AdminCourseBuilder() {
             await reloadTree(targetCourseId)
         } catch (saveError) {
             const firebaseError = saveError as { message?: string }
-            setError(firebaseError.message || 'Failed to save course.')
+            setError(firebaseError.message || 'Курсыг хадгалж чадсангүй.')
         } finally {
             setBusy(false)
         }
@@ -510,18 +510,18 @@ export function AdminCourseBuilder() {
         try {
             if (selectedSection) {
                 await updateSection(selection.courseId, selectedSection.id, sectionDraft)
-                setMessage('Section updated.')
+                setMessage('Хэсэг шинэчлэгдлээ.')
             } else {
                 nextSectionId = await addSection(selection.courseId, sectionDraft)
                 setSelection((current) => ({ ...current, sectionId: nextSectionId, lessonId: null }))
-                setMessage('Section added.')
+                setMessage('Хэсэг нэмэгдлээ.')
             }
 
             await reloadCourses(selection.courseId)
             await reloadTree(selection.courseId, nextSectionId, null)
         } catch (saveError) {
             const firebaseError = saveError as { message?: string }
-            setError(firebaseError.message || 'Failed to save section.')
+            setError(firebaseError.message || 'Хэсгийг хадгалж чадсангүй.')
         } finally {
             setBusy(false)
         }
@@ -539,18 +539,18 @@ export function AdminCourseBuilder() {
         try {
             if (selectedLesson) {
                 await updateLesson(selection.courseId, selection.sectionId, selectedLesson.id, lessonDraft)
-                setMessage('Lesson updated.')
+                setMessage('Хичээл шинэчлэгдлээ.')
             } else {
                 nextLessonId = await addLesson(selection.courseId, selection.sectionId, lessonDraft)
                 setSelection((current) => ({ ...current, lessonId: nextLessonId }))
-                setMessage('Lesson added.')
+                setMessage('Хичээл нэмэгдлээ.')
             }
 
             await reloadCourses(selection.courseId)
             await reloadTree(selection.courseId, selection.sectionId, nextLessonId)
         } catch (saveError) {
             const firebaseError = saveError as { message?: string }
-            setError(firebaseError.message || 'Failed to save lesson.')
+            setError(firebaseError.message || 'Хичээлийг хадгалж чадсангүй.')
         } finally {
             setBusy(false)
         }
@@ -574,35 +574,35 @@ export function AdminCourseBuilder() {
                                         <AlertTriangle className="h-5 w-5" aria-hidden="true" />
                                     </div>
                                     <div className="min-w-0">
-                                        <h3 className="text-xl font-semibold text-white">Confirm delete</h3>
+                                        <h3 className="text-xl font-semibold text-white">Устгахыг батлах</h3>
                                         <p className="mt-2 text-sm leading-6 text-slate-300">
                                             {deleteTarget.kind === 'course'
-                                                ? `Delete the course “${deleteTarget.title}” and all of its sections, lessons, enrollments, progress, and thumbnail?`
+                                                ? `“${deleteTarget.title}” курс болон түүний бүх хэсэг, хичээл, бүртгэл, явц, ковер зургийг устгах уу?`
                                                 : deleteTarget.kind === 'section'
-                                                    ? `Delete the section “${deleteTarget.title}” and all lessons inside it?`
-                                                    : `Delete the lesson “${deleteTarget.title}”?`}
+                                                    ? `“${deleteTarget.title}” хэсэг болон доторх бүх хичээлийг устгах уу?`
+                                                    : `“${deleteTarget.title}” хичээлийг устгах уу?`}
                                         </p>
 
                                         <div className="mt-4 grid gap-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-sm text-slate-300">
                                             {deleteTarget.kind === 'course' ? (
                                                 <>
                                                     <div className="flex items-center justify-between gap-3">
-                                                        <span>Sections to remove</span>
+                                                        <span>Устгах хэсгүүд</span>
                                                         <strong className="text-white">{selectedCourseCounts.sectionCount}</strong>
                                                     </div>
                                                     <div className="flex items-center justify-between gap-3">
-                                                        <span>Lessons to remove</span>
+                                                        <span>Устгах хичээлүүд</span>
                                                         <strong className="text-white">{selectedCourseCounts.lessonCount}</strong>
                                                     </div>
                                                 </>
                                             ) : deleteTarget.kind === 'section' ? (
                                                 <div className="flex items-center justify-between gap-3">
-                                                    <span>Lessons inside section</span>
+                                                    <span>Хэсэг доторх хичээлүүд</span>
                                                     <strong className="text-white">{selectedSectionLessonCount}</strong>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center justify-between gap-3">
-                                                    <span>Resource links in lesson</span>
+                                                    <span>Хичээлийн нөөц холбоосууд</span>
                                                     <strong className="text-white">{selectedLessonLinkCount}</strong>
                                                 </div>
                                             )}
@@ -632,26 +632,26 @@ export function AdminCourseBuilder() {
                             </div>
                         </div>
                     ) : null}
-                    <span className="eyebrow">Admin course studio</span>
-                    <h2>Courses, sections, and lessons are now Firebase-backed.</h2>
+                    <span className="eyebrow">Админы курсийн студи</span>
+                    <h2>Курс, хэсэг, хичээлүүд бүгд Firebase дээр тулгуурлан ажиллаж байна.</h2>
                     <p>
-                        Select a course first, then a section, then a lesson. The course thumbnail uploads to Firebase
-                        Storage and all content is saved in Firestore.
+                        Эхлээд курс, дараа нь хэсэг, эцэст нь хичээл сонгоно. Курсийн ковер зураг Firebase Storage-д
+                        хадгалагдаж, бүх агуулга өгөгдлийн санд бүртгэгдэнэ.
                     </p>
                 </div>
 
                 <div className="builder-stats">
                     <article>
                         <strong>{courses.length}</strong>
-                        <span>Courses</span>
+                        <span>Курс</span>
                     </article>
                     <article>
                         <strong>{tree.sections.length}</strong>
-                        <span>Sections</span>
+                        <span>Хэсэг</span>
                     </article>
                     <article>
                         <strong>{lessonCount}</strong>
-                        <span>Lessons</span>
+                        <span>Хичээл</span>
                     </article>
                 </div>
             </header>
@@ -667,11 +667,11 @@ export function AdminCourseBuilder() {
                 <aside className="tree-panel">
                     <div className="panel-heading">
                         <div>
-                            <span className="card-kicker">Courses</span>
-                            <h3>Course tree</h3>
+                            <span className="card-kicker">Курс</span>
+                            <h3>Курсийн бүтэц</h3>
                         </div>
                         <button type="button" className="secondary-button" onClick={resetToNewCourse}>
-                            New course
+                            Шинэ курс
                         </button>
                     </div>
 
@@ -687,14 +687,14 @@ export function AdminCourseBuilder() {
                                 <small>{course.status}</small>
                             </button>
                         ))}
-                        {!courses.length ? <p className="helper-copy">No courses yet.</p> : null}
+                        {!courses.length ? <p className="helper-copy">Одоогоор курс алга.</p> : null}
                     </div>
 
                     <div className="tree-divider" />
 
                     <div className="panel-heading">
                         <div>
-                            <span className="card-kicker">Sections</span>
+                            <span className="card-kicker">Хэсэг</span>
                             <h3>{selectedCourse?.title || 'Select a course'}</h3>
                         </div>
                     </div>
@@ -722,7 +722,7 @@ export function AdminCourseBuilder() {
                                         onClick={() => selectSection(section.id)}
                                     >
                                         <span>{section.title}</span>
-                                        <small>{section.lessons.length} lessons</small>
+                                        <small>{section.lessons.length} хичээл</small>
                                     </button>
                                 </div>
 
@@ -749,14 +749,14 @@ export function AdminCourseBuilder() {
                                                 onClick={() => selectLesson(lesson.id)}
                                             >
                                                 <span>{lesson.title}</span>
-                                                <small>{lesson.order}. lesson</small>
+                                                <small>{lesson.order}. хичээл</small>
                                             </button>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         ))}
-                        {!tree.sections.length ? <p className="helper-copy">No sections yet.</p> : null}
+                        {!tree.sections.length ? <p className="helper-copy">Одоогоор хэсэг алга.</p> : null}
                     </div>
                 </aside>
 
@@ -764,8 +764,8 @@ export function AdminCourseBuilder() {
                     <form className="course-form" onSubmit={handleCourseSubmit}>
                         <div className="panel-heading">
                             <div>
-                                <span className="card-kicker">Course details</span>
-                                <h3>{selection.courseId ? 'Edit selected course' : 'Create a new course'}</h3>
+                                <span className="card-kicker">Курсын мэдээлэл</span>
+                                <h3>{selection.courseId ? 'Сонгосон курсыг засах' : 'Шинэ курс үүсгэх'}</h3>
                             </div>
                             <div className="flex items-center gap-3">
                                 {selectedCourse ? (
@@ -776,27 +776,27 @@ export function AdminCourseBuilder() {
                                         className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Trash2 className="h-4 w-4" aria-hidden="true" />
-                                        <span>Delete course</span>
+                                        <span>Курс устгах</span>
                                     </button>
                                 ) : null}
                                 <button type="submit" className="primary-button" disabled={busy}>
-                                    {busy ? 'Saving...' : selection.courseId ? 'Save course' : 'Create course'}
+                                    {busy ? 'Хадгалж байна...' : selection.courseId ? 'Курс хадгалах' : 'Курс үүсгэх'}
                                 </button>
                             </div>
                         </div>
 
                         <div className="form-grid">
                             <label>
-                                <span>Title</span>
+                                <span>Гарчиг</span>
                                 <input
                                     value={courseDraft.title}
                                     onChange={(event) => setCourseDraft((current) => ({ ...current, title: event.target.value }))}
-                                    placeholder="Course title"
+                                    placeholder="Курсын гарчиг"
                                 />
                             </label>
 
                             <label>
-                                <span>Slug</span>
+                                <span>URL нэр</span>
                                 <input
                                     value={courseDraft.slug}
                                     onChange={(event) => setCourseDraft((current) => ({ ...current, slug: event.target.value }))}
@@ -805,51 +805,51 @@ export function AdminCourseBuilder() {
                             </label>
 
                             <label>
-                                <span>Category</span>
+                                <span>Ангилал</span>
                                 <input
                                     value={courseDraft.category}
                                     onChange={(event) =>
                                         setCourseDraft((current) => ({ ...current, category: event.target.value }))
                                     }
-                                    placeholder="Design"
+                                    placeholder="Дизайн"
                                 />
                             </label>
 
                             <label>
-                                <span>Level</span>
+                                <span>Түвшин</span>
                                 <input
                                     value={courseDraft.level}
                                     onChange={(event) => setCourseDraft((current) => ({ ...current, level: event.target.value }))}
-                                    placeholder="Beginner"
+                                    placeholder="Анхан шат"
                                 />
                             </label>
                         </div>
 
                         <label>
-                            <span>Description</span>
+                            <span>Тайлбар</span>
                             <textarea
                                 value={courseDraft.description}
                                 onChange={(event) =>
                                     setCourseDraft((current) => ({ ...current, description: event.target.value }))
                                 }
                                 rows={4}
-                                placeholder="Short description of the course"
+                                placeholder="Курсын товч тайлбар"
                             />
                         </label>
 
                         <div className="media-dropzone">
                             <div>
-                                <span className="card-kicker">Thumbnail</span>
-                                <h4>Upload course cover</h4>
+                                <span className="card-kicker">Ковер</span>
+                                <h4>Курсын ковер зураг оруулах</h4>
                                 <p>
                                     {thumbnailFile
                                         ? thumbnailFile.name
-                                        : 'Thumbnail image will be stored in Firebase Storage.'}
+                                        : 'Ковер зураг Firebase Storage-д хадгалагдана.'}
                                 </p>
                             </div>
                             <label className="upload-button">
                                 <input type="file" accept="image/*" onChange={handleThumbnailUpload} />
-                                Choose image
+                                Зураг сонгох
                             </label>
                         </div>
 
@@ -859,14 +859,14 @@ export function AdminCourseBuilder() {
                                 className={courseDraft.status === 'draft' ? 'active' : ''}
                                 onClick={() => setCourseDraft((current) => ({ ...current, status: 'draft' }))}
                             >
-                                Draft
+                                Ноорог
                             </button>
                             <button
                                 type="button"
                                 className={courseDraft.status === 'published' ? 'active' : ''}
                                 onClick={() => setCourseDraft((current) => ({ ...current, status: 'published' }))}
                             >
-                                Published
+                                Нийтлэгдсэн
                             </button>
                         </div>
                     </form>
@@ -874,8 +874,8 @@ export function AdminCourseBuilder() {
                     <form className="course-form section-form" onSubmit={handleSectionSubmit}>
                         <div className="panel-heading">
                             <div>
-                                <span className="card-kicker">Section</span>
-                                <h3>{selectedSection ? 'Edit selected section' : 'Add section to selected course'}</h3>
+                                <span className="card-kicker">Хэсэг</span>
+                                <h3>{selectedSection ? 'Сонгосон хэсгийг засах' : 'Сонгосон курст хэсэг нэмэх'}</h3>
                             </div>
                             <div className="flex items-center gap-3">
                                 {selectedSection ? (
@@ -886,36 +886,36 @@ export function AdminCourseBuilder() {
                                         className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Trash2 className="h-4 w-4" aria-hidden="true" />
-                                        <span>Delete section</span>
+                                        <span>Хэсэг устгах</span>
                                     </button>
                                 ) : null}
                                 <button type="submit" className="primary-button" disabled={!selection.courseId || busy}>
-                                    {busy ? 'Saving...' : selectedSection ? 'Save section' : 'Add section'}
+                                    {busy ? 'Хадгалж байна...' : selectedSection ? 'Хэсэг хадгалах' : 'Хэсэг нэмэх'}
                                 </button>
                             </div>
                         </div>
 
                         <div className="form-grid">
                             <label>
-                                <span>Section title</span>
+                                <span>Хэсгийн гарчиг</span>
                                 <input
                                     value={sectionDraft.title}
                                     onChange={(event) =>
                                         setSectionDraft((current) => ({ ...current, title: event.target.value }))
                                     }
-                                    placeholder="Introduction"
+                                    placeholder="Оршил"
                                     disabled={!selection.courseId}
                                 />
                             </label>
 
                             <label>
-                                <span>Description</span>
+                                <span>Тайлбар</span>
                                 <input
                                     value={sectionDraft.description}
                                     onChange={(event) =>
                                         setSectionDraft((current) => ({ ...current, description: event.target.value }))
                                     }
-                                    placeholder="Section description"
+                                    placeholder="Хэсгийн тайлбар"
                                     disabled={!selection.courseId}
                                 />
                             </label>
@@ -925,8 +925,8 @@ export function AdminCourseBuilder() {
                     <form className="course-form lesson-form" onSubmit={handleLessonSubmit}>
                         <div className="panel-heading">
                             <div>
-                                <span className="card-kicker">Lesson</span>
-                                <h3>{selectedLesson ? 'Edit selected lesson' : 'Add lesson to selected section'}</h3>
+                                <span className="card-kicker">Хичээл</span>
+                                <h3>{selectedLesson ? 'Сонгосон хичээлийг засах' : 'Сонгосон хэсэгт хичээл нэмэх'}</h3>
                             </div>
                             <div className="flex items-center gap-3">
                                 {selectedLesson ? (
@@ -937,7 +937,7 @@ export function AdminCourseBuilder() {
                                         className="inline-flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Trash2 className="h-4 w-4" aria-hidden="true" />
-                                        <span>Delete lesson</span>
+                                        <span>Хичээл устгах</span>
                                     </button>
                                 ) : null}
                                 <button
@@ -945,26 +945,26 @@ export function AdminCourseBuilder() {
                                     className="primary-button"
                                     disabled={!selection.courseId || !selection.sectionId || busy}
                                 >
-                                    {busy ? 'Saving...' : selectedLesson ? 'Save lesson' : 'Add lesson'}
+                                    {busy ? 'Хадгалж байна...' : selectedLesson ? 'Хичээл хадгалах' : 'Хичээл нэмэх'}
                                 </button>
                             </div>
                         </div>
 
                         <div className="form-grid">
                             <label>
-                                <span>Lesson title</span>
+                                <span>Хичээлийн гарчиг</span>
                                 <input
                                     value={lessonDraft.title}
                                     onChange={(event) =>
                                         setLessonDraft((current) => ({ ...current, title: event.target.value }))
                                     }
-                                    placeholder="Lesson title"
+                                    placeholder="Хичээлийн гарчиг"
                                     disabled={!selection.sectionId}
                                 />
                             </label>
 
                             <label>
-                                <span>YouTube URL</span>
+                                <span>YouTube холбоос</span>
                                 <input
                                     value={lessonDraft.youtubeUrl}
                                     onChange={(event) =>
@@ -975,48 +975,48 @@ export function AdminCourseBuilder() {
                                 />
                             </label>
 
-                            {/* Removed Notes title input per UX request */}
+                            {/* UX хүсэлтийн дагуу тэмдэглэлийн гарчгийн талбарыг хассан */}
                         </div>
 
                         <div className="space-y-3">
                             <label>
-                                <span>Rich notes</span>
+                                <span>Нэмэлт тэмдэглэл</span>
                                 <textarea
                                     value={lessonDraft.notes}
                                     onChange={(event) =>
                                         setLessonDraft((current) => ({ ...current, notes: event.target.value }))
                                     }
                                     rows={5}
-                                    placeholder="Lesson notes"
+                                    placeholder="Хичээлийн тэмдэглэл"
                                     disabled={!selection.sectionId}
                                 />
                             </label>
                             <div className="flex items-center justify-between gap-3">
-                                <span className="text-sm font-medium text-slate-200">Links</span>
+                                <span className="text-sm font-medium text-slate-200">Холбоосууд</span>
                                 <button
                                     type="button"
                                     onClick={addResourceLinkRow}
                                     disabled={!selection.sectionId}
                                     className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300/40 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    + Add link
+                                    + Холбоос нэмэх
                                 </button>
                             </div>
                             <div className="space-y-3">
                                 {lessonDraft.resourceLinks.map((link, index) => (
                                     <div key={link.id} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 md:grid-cols-[1fr_1.2fr_auto] md:items-end">
                                         <label>
-                                            <span>Link title</span>
+                                            <span>Холбоосын нэр</span>
                                             <input
                                                 value={link.title}
                                                 onChange={(event) => updateResourceLinkRow(index, 'title', event.target.value)}
-                                                placeholder="Resource title"
+                                                placeholder="Нөөцийн нэр"
                                                 disabled={!selection.sectionId}
                                             />
                                         </label>
 
                                         <label>
-                                            <span>Link URL</span>
+                                            <span>Холбоосын URL</span>
                                             <input
                                                 value={link.url}
                                                 onChange={(event) => updateResourceLinkRow(index, 'url', event.target.value)}
@@ -1031,7 +1031,7 @@ export function AdminCourseBuilder() {
                                             disabled={!selection.sectionId}
                                             className="rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-rose-400/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                            Remove
+                                            Устгах
                                         </button>
                                     </div>
                                 ))}
@@ -1042,15 +1042,15 @@ export function AdminCourseBuilder() {
                     <section className="preview-panel">
                         <div className="panel-heading">
                             <div>
-                                <span className="card-kicker">Preview</span>
-                                <h3>{selectedCourse?.title || 'Select or create a course'}</h3>
+                                <span className="card-kicker">Урьдчилан харах</span>
+                                <h3>{selectedCourse?.title || 'Курс сонгох эсвэл үүсгэх'}</h3>
                             </div>
                         </div>
 
                         <div className="preview-meta">
-                            <span>{selectedCourse?.category || 'Category'}</span>
-                            <span>{selectedCourse?.level || 'Level'}</span>
-                            <span>{selectedCourse?.status || 'draft'}</span>
+                            <span>{selectedCourse?.category || 'Ангилал'}</span>
+                            <span>{selectedCourse?.level || 'Түвшин'}</span>
+                            <span>{selectedCourse?.status || 'ноорог'}</span>
                         </div>
 
                         <div className="thumbnail-preview">
@@ -1058,18 +1058,18 @@ export function AdminCourseBuilder() {
                                 <img src={selectedCourse.thumbnailURL} alt="Course thumbnail preview" />
                             ) : (
                                 <div>
-                                    <strong>No thumbnail yet</strong>
-                                    <span>Upload a cover image to store in Firebase Storage.</span>
+                                    <strong>Одоогоор ковер зураггүй</strong>
+                                    <span>Ковер зураг оруулбал Firebase Storage-д хадгалагдана.</span>
                                 </div>
                             )}
                         </div>
 
                         <article className="lesson-view__card">
-                            <span className="card-kicker">Selected lesson</span>
-                            <h4>{selectedLesson?.title || 'No lesson selected'}</h4>
+                            <span className="card-kicker">Сонгосон хичээл</span>
+                            <h4>{selectedLesson?.title || 'Хичээл сонгогдоогүй'}</h4>
                             {selectedLesson?.resourceLinks.length ? (
                                 <div className="space-y-2">
-                                    <span className="card-kicker">Links</span>
+                                    <span className="card-kicker">Холбоосууд</span>
                                     <ul className="space-y-1">
                                         {selectedLesson.resourceLinks.map((link) => (
                                             <li key={`${link.title}-${link.url}`}>
@@ -1091,7 +1091,7 @@ export function AdminCourseBuilder() {
                                     />
                                 </div>
                             ) : null}
-                            <p>{selectedLesson?.notes || 'Pick a lesson from the tree on the left.'}</p>
+                            <p>{selectedLesson?.notes || 'Зүүн талын модноос хичээл сонгоно уу.'}</p>
                         </article>
                     </section>
                 </div>

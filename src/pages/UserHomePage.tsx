@@ -33,7 +33,7 @@ export function UserHomePage() {
             } catch (courseError) {
                 const firebaseError = courseError as { message?: string }
                 if (active) {
-                    setError(firebaseError.message || 'Failed to load courses.')
+                    setError(firebaseError.message || 'Хичээлүүдийг ачаалж чадсангүй.')
                 }
             } finally {
                 if (active) {
@@ -70,9 +70,9 @@ export function UserHomePage() {
 
     const stats = useMemo(
         () => [
-            { label: 'Published courses', value: courses.length },
-            { label: 'Featured on home', value: featuredCourses.length },
-            { label: 'Active space', value: profile?.role === 'admin' ? 'Admin + classroom' : 'Student' },
+            { label: 'Нийтлэгдсэн хичээл', value: courses.length },
+            { label: 'Нүүр хуудсан дахь онцлох', value: featuredCourses.length },
+            { label: 'Идэвхтэй орчин', value: profile?.role === 'admin' ? 'Админ + сургалтын орчин' : 'Сурагч' },
         ],
         [courses.length, featuredCourses.length, profile?.role],
     )
@@ -101,8 +101,8 @@ export function UserHomePage() {
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20">
                         <div className="flex items-center justify-between gap-4">
                             <div>
-                                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Classroom</span>
-                                <h2 className="mt-2 text-2xl font-semibold text-white">Continue learning</h2>
+                                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Сургалтын орчин</span>
+                                <h2 className="mt-2 text-2xl font-semibold text-white">Сургалтаа үргэлжлүүлээрэй</h2>
                             </div>
                             <button
                                 type="button"
@@ -110,7 +110,7 @@ export function UserHomePage() {
                                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
                             >
                                 <ArrowIcon />
-                                <span>Open classroom</span>
+                                <span>Сургалт</span>
                             </button>
                         </div>
 
@@ -126,7 +126,7 @@ export function UserHomePage() {
                                             {course.thumbnailURL ? (
                                                 <img src={course.thumbnailURL} alt={course.title} className="h-full w-full object-cover" />
                                             ) : (
-                                                <div className="flex h-full items-center justify-center text-sm text-slate-500">No thumbnail</div>
+                                                <div className="flex h-full items-center justify-center text-sm text-slate-500">Зураггүй</div>
                                             )}
                                         </div>
                                         <div className="space-y-3 p-4">
@@ -139,14 +139,14 @@ export function UserHomePage() {
                                                 onClick={() => handleNavigate('classroom')}
                                                 className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:from-cyan-300 hover:to-indigo-300"
                                             >
-                                                <span>Go to classroom</span>
+                                                <span>Сургалт руу очих</span>
                                             </button>
                                         </div>
                                     </div>
                                 ))
                             ) : (
                                 <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6 text-sm text-slate-400 md:col-span-2 xl:col-span-3">
-                                    No published courses yet.
+                                    Одоогоор нийтлэгдсэн хичээл алга.
                                 </div>
                             )}
                         </div>
@@ -155,8 +155,8 @@ export function UserHomePage() {
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-black/20">
                         <div className="flex items-center justify-between gap-4">
                             <div>
-                                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Community</span>
-                                <h2 className="mt-2 text-2xl font-semibold text-white">Stay connected</h2>
+                                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Хамт олон</span>
+                                <h2 className="mt-2 text-2xl font-semibold text-white">Холбоотой байгаарай</h2>
                             </div>
                             <button
                                 type="button"
@@ -164,27 +164,27 @@ export function UserHomePage() {
                                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-400/60 hover:text-white"
                             >
                                 <ArrowIcon />
-                                <span>Open community</span>
+                                <span>Хамт олон руу</span>
                             </button>
                         </div>
 
                         <div className="mt-5 space-y-4">
                             <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5">
-                                <div className="text-sm font-semibold text-white">Announcements</div>
+                                <div className="text-sm font-semibold text-white">Зар мэдээ</div>
                                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                                    New posts, course updates, and community messages will appear here.
+                                    Шинэ пост, хичээлийн шинэчлэлт, хамтын орчны зурвасууд энд харагдана.
                                 </p>
                             </div>
                             <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5">
-                                <div className="text-sm font-semibold text-white">Study groups</div>
+                                <div className="text-sm font-semibold text-white">Суралцах бүлгүүд</div>
                                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                                    Use the community area to find classmates and share progress.
+                                    Хамтын орчноос ангийнхан, багийнхаа гишүүдийг олж, явцаа хуваалцаарай.
                                 </p>
                             </div>
                             <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5">
-                                <div className="text-sm font-semibold text-white">Quick access</div>
+                                <div className="text-sm font-semibold text-white">Түргэн хандалт</div>
                                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                                    Jump into classroom or community from the header buttons at any time.
+                                    Дээд цэсний товчлуураар хүссэн үедээ сургалтын орчин эсвэл хамтын орчин руу шилжинэ.
                                 </p>
                             </div>
                         </div>

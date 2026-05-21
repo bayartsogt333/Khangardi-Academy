@@ -49,7 +49,9 @@
     }
 
     .progress-shine {
-        animation: progressShine 2.8s ease-in-out infinite;
+        /* reduce constant motion: play once when rendered and respect reduced motion */
+        animation: progressShine 1.2s ease-out 1;
+        opacity: 0.18;
     }
 
     @keyframes progressShine {
@@ -63,6 +65,13 @@
         50% {
             transform: translateX(260%) skewX(-12deg);
             opacity: 0.55;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .progress-shine {
+            animation: none !important;
+            opacity: 0.06;
         }
     }
 }
