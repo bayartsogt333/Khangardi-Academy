@@ -54,6 +54,14 @@ export function LearningHomePage() {
                         <div className="mt-3 text-3xl font-semibold text-white">{courses.length}</div>
                         <p className="mt-2 text-sm text-slate-400">Оюутнуудад харагдах нийтлэгдсэн хичээлүүд.</p>
                     </article>
+
+                    <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
+                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Хандалт</div>
+                        <div className="mt-3 flex items-center gap-2 text-3xl font-semibold text-white">
+                            <span>Суралцах</span>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-400">Хичээлийн хуудсаар дамжин үргэлжлүүлэн суралцаарай.</p>
+                    </article>
                     <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
                         <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Профайл</div>
                         <div className="mt-3 flex items-center gap-3 text-3xl font-semibold text-white">
@@ -64,14 +72,6 @@ export function LearningHomePage() {
                             </span>
                         </div>
                         <p className="mt-2 text-sm text-slate-400">Таны одоогийн хандалтын түвшин.</p>
-                    </article>
-                    <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl shadow-black/20">
-                        <div className="text-xs uppercase tracking-[0.24em] text-cyan-300">Хандалт</div>
-                        <div className="mt-3 flex items-center gap-2 text-3xl font-semibold text-white">
-                            <BookOpen className="h-7 w-7 text-cyan-300" />
-                            <span>Суралцах</span>
-                        </div>
-                        <p className="mt-2 text-sm text-slate-400">Хичээлийн хуудсаар дамжин үргэлжлүүлэн суралцаарай.</p>
                     </article>
                 </section>
 
@@ -133,11 +133,9 @@ export function LearningHomePage() {
                                     <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                                         <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
                                             {course.category || 'Category'}
-                                            {course.category || 'Ангилал'}
                                         </span>
                                         <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1">
                                             {course.level || 'Level'}
-                                            {course.level || 'Түвшин'}
                                         </span>
                                     </div>
 
